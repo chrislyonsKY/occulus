@@ -357,6 +357,45 @@ Both packages share test fixtures, documentation structure, and API concepts. A 
 
 ---
 
+## Real-World Output Gallery
+
+All outputs generated from **real USGS 3DEP, KY From Above, and OpenTopography LiDAR data** — WCAG 2.1 AA compliant with alt-text metadata.
+
+### Coal Mine Terrain — Full Toolkit Demo (KY From Above)
+![Coal Mine Terrain](examples/outputs/coal_mine_terrain.png)
+
+### Colorado Front Range — Rocky Mountains
+![Colorado Rocky Mountain Terrain](examples/outputs/colorado_rocky_mountain_terrain.png)
+
+### Slope and Aspect Analysis — Eastern Kentucky
+![Slope and Aspect Analysis](examples/outputs/slope_aspect_analysis.png)
+
+### Kentucky Ground Classification (CSF)
+![Kentucky Ground Classification](examples/outputs/kentucky_ground_classification.png)
+
+### KY From Above — Bluegrass Region Terrain Survey
+![KY From Above Terrain](examples/outputs/kyfromabove_bluegrass.png)
+
+### Houston, Texas — Urban Density Analysis
+![Houston Urban Density](examples/outputs/houston_urban_density.png)
+
+### Arizona — Sonoran Desert Basin and Range
+![Arizona Desert Terrain](examples/outputs/arizona_desert_terrain.png)
+
+### CSF vs PMF Ground Classification Comparison
+![Ground Comparison CSF PMF](examples/outputs/ground_comparison_csf_pmf.png)
+
+### Oregon Pacific Coastline — Cliff, Beach, Forest
+![Oregon Coast Terrain](examples/outputs/oregon_coast_terrain.png)
+
+### Louisiana — Mississippi River Delta Wetlands
+![Louisiana Wetlands Delta](examples/outputs/louisiana_wetlands_delta.png)
+
+### Utah Canyonlands — Colorado Plateau
+![Utah Canyon Geology](examples/outputs/utah_canyon_geology.png)
+
+---
+
 ## Use cases
 
 ### Environmental monitoring
