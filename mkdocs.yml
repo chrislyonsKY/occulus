@@ -1,0 +1,83 @@
+site_name: "Occulus"
+site_description: "Multi-platform point cloud analysis — registration, segmentation, meshing, and feature extraction"
+site_url: "https://chrislyonsky.github.io/occulus/"
+repo_url: "https://github.com/chrislyonsKY/occulus"
+repo_name: "chrislyonsKY/occulus"
+edit_uri: "edit/main/docs/"
+
+theme:
+  name: material
+  palette:
+    - scheme: slate
+      primary: teal
+      accent: cyan
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+    - scheme: default
+      primary: teal
+      accent: cyan
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+  font:
+    text: Inter
+    code: JetBrains Mono
+  icon:
+    repo: fontawesome/brands/github
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: numpy
+            show_source: true
+            show_root_heading: true
+            heading_level: 2
+  # Uncomment if using Jupyter notebooks in docs/
+  # - mkdocs-jupyter:
+  #     execute: false
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - API Reference:
+      - Reference: api/reference.md
+  - Architecture: architecture.md
+  - Release Notes: release-notes.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/chrislyonsKY
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/occulus/
