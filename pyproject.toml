@@ -135,6 +135,14 @@ disallow_untyped_defs = true
 disallow_incomplete_defs = true
 
 [[tool.mypy.overrides]]
+module = "occulus.types"
+disable_error_code = ["attr-defined", "type-arg"]
+
+[[tool.mypy.overrides]]
+module = "occulus.segmentation.objects"
+disable_error_code = ["arg-type"]
+
+[[tool.mypy.overrides]]
 module = [
     "laspy.*",
     "open3d.*",
