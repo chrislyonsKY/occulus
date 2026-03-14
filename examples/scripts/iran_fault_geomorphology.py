@@ -33,17 +33,15 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
-import numpy as np
-
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
 OUTPUTS = Path(__file__).parent.parent / "outputs"
 
 # Bounding box: fault scarp segment near Sabzevar city (small area for demo)
-_WEST  = 57.10
+_WEST = 57.10
 _SOUTH = 36.22
-_EAST  = 57.30
+_EAST = 57.30
 _NORTH = 36.35
 _DATASET = "OTDS.102023.32640.2"
 
@@ -102,10 +100,7 @@ def main() -> None:
     cache = Path(tempfile.gettempdir()) / "occulus_demo"
     cache.mkdir(parents=True, exist_ok=True)
 
-    if args.input:
-        path = args.input
-    else:
-        path = _download_tile(cache)
+    path = args.input or _download_tile(cache)
 
     logger.info("Reading point cloud (%.0f%% subsample)…", args.subsample * 100)
     cloud = read(path, platform="aerial", subsample=args.subsample)
@@ -122,16 +117,23 @@ def main() -> None:
     classified = classify_ground_csf(cloud)
 
     from occulus.types import AerialCloud
+
     if isinstance(classified, AerialCloud) and classified.classification is not None:
         n_g = int((classified.classification == 2).sum())
-        print(f"\n=== Ground Classification ===")
+        print("\n=== Ground Classification ===")
         print(f"  Ground : {n_g:,} ({n_g / cloud.n_points:.1%})")
         print(f"  Above  : {cloud.n_points - n_g:,}")
 
     # --- Visualisation -------------------------------------------------------
     try:
         import matplotlib.pyplot as plt
-        from _plot_style import CMAP_ELEVATION, apply_report_style, save_figure, add_cross_section_line
+        from _plot_style import (
+            CMAP_ELEVATION,
+            add_cross_section_line,
+            apply_report_style,
+            save_figure,
+        )
+
         apply_report_style()
         xyz = cloud.xyz
 
@@ -142,15 +144,22 @@ def main() -> None:
         ax_hist = fig.add_subplot(gs[1, :])
 
         sc = ax_plan.scatter(
-            xyz[:, 0], xyz[:, 1], c=xyz[:, 2],
-            cmap=CMAP_ELEVATION, s=0.3, alpha=0.5, rasterized=True,
+            xyz[:, 0],
+            xyz[:, 1],
+            c=xyz[:, 2],
+            cmap=CMAP_ELEVATION,
+            s=0.3,
+            alpha=0.5,
+            rasterized=True,
         )
         plt.colorbar(sc, ax=ax_plan, label="Elevation (m)")
         ax_plan.set_title("Plan View — Sabzevar Fault Zone, Iran")
-        ax_plan.set_xlabel("Easting (m)"); ax_plan.set_ylabel("Northing (m)")
+        ax_plan.set_xlabel("Easting (m)")
+        ax_plan.set_ylabel("Northing (m)")
 
-        add_cross_section_line(ax_plan, ax_prof, xyz, y_frac=0.5,
-                               band_frac=0.03, label="Cross Section A\u2013A\u2032")
+        add_cross_section_line(
+            ax_plan, ax_prof, xyz, y_frac=0.5, band_frac=0.03, label="Cross Section A\u2013A\u2032"
+        )
 
         ax_hist.hist(xyz[:, 2], bins=60, color="#8B4513", alpha=0.75, edgecolor="white")
         ax_hist.set_xlabel("Elevation (m)")
@@ -160,14 +169,19 @@ def main() -> None:
         fig.suptitle(
             "Iran Fault Geomorphology — Sabzevar, NE Iran (OpenTopography CC BY 4.0)\n"
             f"Points: {cloud.n_points:,}  |  Relief: {stats.z_max - stats.z_min:.0f} m",
-            fontsize=12, fontweight="bold",
+            fontsize=12,
+            fontweight="bold",
         )
         out = OUTPUTS / "iran_fault_geomorphology.png"
-        save_figure(fig, out, alt_text=(
-            "Four-panel figure showing Iran Sabzevar fault geomorphology: plan view "
-            "colored by elevation showing fault scarps, east-west cross-section "
-            "through the fault zone, and elevation histogram."
-        ))
+        save_figure(
+            fig,
+            out,
+            alt_text=(
+                "Four-panel figure showing Iran Sabzevar fault geomorphology: plan view "
+                "colored by elevation showing fault scarps, east-west cross-section "
+                "through the fault zone, and elevation histogram."
+            ),
+        )
         logger.info("Saved → %s", out)
         plt.close()
     except ImportError:
@@ -176,6 +190,7 @@ def main() -> None:
     if not args.no_viz:
         try:
             from occulus.viz import visualize
+
             visualize(cloud, window_name="Iran Fault Geomorphology — Sabzevar")
         except ImportError:
             logger.warning("open3d not installed — skipping visualization.")

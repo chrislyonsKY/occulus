@@ -61,7 +61,9 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Occulus ICP registration demo")
     parser.add_argument("--source", type=Path, default=None, help="Local source tile path")
     parser.add_argument("--target", type=Path, default=None, help="Local target tile path")
-    parser.add_argument("--voxel-size", type=float, default=1.0, help="Voxel size for downsampling (m)")
+    parser.add_argument(
+        "--voxel-size", type=float, default=1.0, help="Voxel size for downsampling (m)"
+    )
     parser.add_argument("--subsample", type=float, default=0.2, help="Read-time subsample fraction")
     parser.add_argument("--no-viz", action="store_true", help="Skip Open3D visualization")
     args = parser.parse_args()
@@ -71,7 +73,6 @@ def main() -> None:
     from occulus.normals import estimate_normals
     from occulus.registration import (
         compute_fpfh,
-        icp,
         icp_point_to_plane,
         ransac_registration,
     )
@@ -97,7 +98,13 @@ def main() -> None:
     logger.info("Voxel downsampling (voxel_size=%.2f m)…", args.voxel_size)
     src_ds = voxel_downsample(src, voxel_size=args.voxel_size)
     tgt_ds = voxel_downsample(tgt, voxel_size=args.voxel_size)
-    logger.info("  downsampled: %d → %d  |  %d → %d", src.n_points, src_ds.n_points, tgt.n_points, tgt_ds.n_points)
+    logger.info(
+        "  downsampled: %d → %d  |  %d → %d",
+        src.n_points,
+        src_ds.n_points,
+        tgt.n_points,
+        tgt_ds.n_points,
+    )
 
     # -- Normals --------------------------------------------------------------
     logger.info("Estimating normals…")
@@ -112,8 +119,10 @@ def main() -> None:
 
     logger.info("Running RANSAC global registration…")
     coarse = ransac_registration(
-        src_n, tgt_n,
-        src_feat, tgt_feat,
+        src_n,
+        tgt_n,
+        src_feat,
+        tgt_feat,
         max_correspondence_distance=args.voxel_size * 3,
         max_iterations=50_000,
     )
@@ -125,7 +134,8 @@ def main() -> None:
     # -- Fine ICP (point-to-plane) --------------------------------------------
     logger.info("Running point-to-plane ICP fine alignment…")
     fine = icp_point_to_plane(
-        src_n, tgt_n,
+        src_n,
+        tgt_n,
         initial_transform=coarse.transformation,
         max_correspondence_distance=args.voxel_size * 1.5,
         max_iterations=200,
@@ -141,6 +151,7 @@ def main() -> None:
     if not args.no_viz:
         try:
             from occulus.viz import visualize_registration
+
             logger.info("Opening Open3D viewer…")
             visualize_registration(src_n, tgt_n, fine, window_name="3DEP ICP Registration")
         except ImportError:

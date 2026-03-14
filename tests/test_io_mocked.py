@@ -2,14 +2,12 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
 
-from occulus.types import AerialCloud, Platform, PointCloud
-
+from occulus.types import Platform, PointCloud
 
 # ---------------------------------------------------------------------------
 # Mocked LAS reader
@@ -23,10 +21,18 @@ class TestReadLasMocked:
         rng = np.random.default_rng(0)
         xyz = rng.random((n, 3))
         # Use spec to prevent MagicMock from auto-creating red/green/blue
-        las = MagicMock(spec=[
-            "x", "y", "z", "intensity", "classification",
-            "return_number", "number_of_returns", "header",
-        ])
+        las = MagicMock(
+            spec=[
+                "x",
+                "y",
+                "z",
+                "intensity",
+                "classification",
+                "return_number",
+                "number_of_returns",
+                "header",
+            ]
+        )
         las.x = xyz[:, 0]
         las.y = xyz[:, 1]
         las.z = xyz[:, 2]
@@ -42,6 +48,7 @@ class TestReadLasMocked:
     def test_raises_import_error_without_laspy(self, tmp_path):
         """_read_las raises ImportError if laspy not installed."""
         from occulus.io.readers import _read_las
+
         with patch.dict("sys.modules", {"laspy": None}):
             with pytest.raises(ImportError, match="laspy"):
                 _read_las(tmp_path / "test.las", platform=Platform.UNKNOWN, subsample=None)
@@ -49,6 +56,7 @@ class TestReadLasMocked:
     def test_reads_basic_las(self, tmp_path):
         """_read_las returns a PointCloud from a mocked laspy object."""
         from occulus.io.readers import _read_las
+
         mock_las = self._make_mock_las(30)
         mock_laspy = MagicMock()
         mock_laspy.read.return_value = mock_las
@@ -63,6 +71,7 @@ class TestReadLasMocked:
     def test_reads_las_with_rgb(self, tmp_path):
         """_read_las extracts RGB when present in LAS."""
         from occulus.io.readers import _read_las
+
         n = 20
         mock_las = self._make_mock_las(n)
         mock_las.red = np.full(n, 30000, dtype=np.uint16)
@@ -81,6 +90,7 @@ class TestReadLasMocked:
     def test_reads_las_with_subsample(self, tmp_path):
         """_read_las applies subsampling."""
         from occulus.io.readers import _read_las
+
         mock_las = self._make_mock_las(100)
         mock_laspy = MagicMock()
         mock_laspy.read.return_value = mock_las
@@ -94,6 +104,7 @@ class TestReadLasMocked:
         """_read_las raises OcculusIOError if laspy.read() fails."""
         from occulus.exceptions import OcculusIOError
         from occulus.io.readers import _read_las
+
         mock_laspy = MagicMock()
         mock_laspy.read.side_effect = RuntimeError("bad file")
 
@@ -104,6 +115,7 @@ class TestReadLasMocked:
     def test_read_dispatcher_calls_las_reader(self, tmp_path):
         """read() dispatcher routes .las extension to _read_las."""
         from occulus.io.readers import read
+
         mock_las = self._make_mock_las(10)
         mock_laspy = MagicMock()
         mock_laspy.read.return_value = mock_las
@@ -128,6 +140,7 @@ class TestReadPlyMocked:
     def test_raises_import_error_without_open3d(self, tmp_path):
         """_read_ply raises ImportError if open3d not installed."""
         from occulus.io.readers import _read_ply
+
         with patch.dict("sys.modules", {"open3d": None}):
             with pytest.raises(ImportError, match="open3d"):
                 _read_ply(tmp_path / "test.ply", platform=Platform.UNKNOWN, subsample=None)
@@ -135,6 +148,7 @@ class TestReadPlyMocked:
     def test_reads_basic_ply(self, tmp_path):
         """_read_ply returns PointCloud from mocked open3d pcd."""
         from occulus.io.readers import _read_ply
+
         rng = np.random.default_rng(1)
         xyz = rng.random((25, 3)).astype(np.float64)
 
@@ -156,6 +170,7 @@ class TestReadPlyMocked:
     def test_reads_ply_with_normals_and_colors(self, tmp_path):
         """_read_ply transfers normals and colors when present."""
         from occulus.io.readers import _read_ply
+
         rng = np.random.default_rng(2)
         xyz = rng.random((15, 3)).astype(np.float64)
         normals = rng.random((15, 3)).astype(np.float64)
@@ -201,6 +216,7 @@ class TestReadPlyMocked:
     def test_reads_ply_with_subsample(self, tmp_path):
         """_read_ply applies subsampling."""
         from occulus.io.readers import _read_ply
+
         rng = np.random.default_rng(3)
         xyz = rng.random((100, 3)).astype(np.float64)
 
@@ -222,6 +238,7 @@ class TestReadPlyMocked:
     def test_read_dispatcher_calls_ply_reader(self, tmp_path):
         """read() dispatcher routes .ply extension to _read_ply."""
         from occulus.io.readers import read
+
         rng = np.random.default_rng(4)
         xyz = rng.random((10, 3)).astype(np.float64)
 
@@ -252,6 +269,7 @@ class TestReadPcdMocked:
     def test_raises_import_error_without_open3d(self, tmp_path):
         """_read_pcd raises ImportError if open3d not installed."""
         from occulus.io.readers import _read_pcd
+
         with patch.dict("sys.modules", {"open3d": None}):
             with pytest.raises(ImportError, match="open3d"):
                 _read_pcd(tmp_path / "test.pcd", platform=Platform.UNKNOWN, subsample=None)
@@ -259,6 +277,7 @@ class TestReadPcdMocked:
     def test_reads_basic_pcd(self, tmp_path):
         """_read_pcd returns PointCloud from mocked open3d pcd."""
         from occulus.io.readers import _read_pcd
+
         rng = np.random.default_rng(5)
         xyz = rng.random((20, 3)).astype(np.float64)
 
@@ -280,6 +299,7 @@ class TestReadPcdMocked:
     def test_read_dispatcher_calls_pcd_reader(self, tmp_path):
         """read() dispatcher routes .pcd extension to _read_pcd."""
         from occulus.io.readers import read
+
         rng = np.random.default_rng(6)
         xyz = rng.random((10, 3)).astype(np.float64)
 
@@ -310,6 +330,7 @@ class TestWriteLasMocked:
     def test_raises_import_error_without_laspy(self, tmp_path):
         """_write_las raises ImportError if laspy not installed."""
         from occulus.io.writers import _write_las
+
         cloud = PointCloud(np.random.default_rng(0).random((10, 3)))
         with patch.dict("sys.modules", {"laspy": None}):
             with pytest.raises(ImportError, match="laspy"):
@@ -318,6 +339,7 @@ class TestWriteLasMocked:
     def test_writes_basic_las(self, tmp_path):
         """_write_las calls laspy.LasData.write()."""
         from occulus.io.writers import _write_las
+
         cloud = PointCloud(np.random.default_rng(0).random((10, 3)))
 
         mock_laspy = MagicMock()
@@ -335,6 +357,7 @@ class TestWriteLasMocked:
     def test_writes_las_with_all_attributes(self, tmp_path):
         """_write_las sets intensity, classification, return_number, rgb."""
         from occulus.io.writers import _write_las
+
         rng = np.random.default_rng(1)
         n = 15
         cloud = PointCloud(
@@ -353,13 +376,14 @@ class TestWriteLasMocked:
         mock_laspy.LasData.return_value = mock_las_data
 
         with patch.dict("sys.modules", {"laspy": mock_laspy}):
-            result = _write_las(cloud, tmp_path / "full.las", compress=False)
+            _write_las(cloud, tmp_path / "full.las", compress=False)
 
         mock_las_data.write.assert_called_once()
 
     def test_write_dispatcher_routes_las(self, tmp_path):
         """write() dispatcher routes .las extension."""
         from occulus.io.writers import write
+
         cloud = PointCloud(np.random.default_rng(0).random((5, 3)))
 
         mock_laspy = MagicMock()
@@ -385,6 +409,7 @@ class TestWritePlyMocked:
     def test_raises_import_error_without_open3d(self, tmp_path):
         """_write_ply raises ImportError if open3d not installed."""
         from occulus.io.writers import _write_ply
+
         cloud = PointCloud(np.random.default_rng(0).random((10, 3)))
         with patch.dict("sys.modules", {"open3d": None}):
             with pytest.raises(ImportError, match="open3d"):
@@ -393,6 +418,7 @@ class TestWritePlyMocked:
     def test_writes_basic_ply(self, tmp_path):
         """_write_ply calls o3d.io.write_point_cloud()."""
         from occulus.io.writers import _write_ply
+
         cloud = PointCloud(np.random.default_rng(0).random((10, 3)))
 
         mock_o3d = MagicMock()
@@ -408,6 +434,7 @@ class TestWritePlyMocked:
     def test_writes_ply_with_normals_and_rgb(self, tmp_path):
         """_write_ply transfers normals and colors to Open3D pcd."""
         from occulus.io.writers import _write_ply
+
         rng = np.random.default_rng(2)
         n = 10
         cloud = PointCloud(
@@ -429,6 +456,7 @@ class TestWritePlyMocked:
     def test_write_dispatcher_routes_ply(self, tmp_path):
         """write() dispatcher routes .ply extension."""
         from occulus.io.writers import write
+
         cloud = PointCloud(np.random.default_rng(0).random((5, 3)))
 
         mock_o3d = MagicMock()

@@ -80,15 +80,20 @@ def main() -> None:
     """Run the Kentucky ground classification demo."""
     parser = argparse.ArgumentParser(description="Occulus ground classification demo")
     parser.add_argument(
-        "--input", type=Path, default=None,
+        "--input",
+        type=Path,
+        default=None,
         help="Path to a local LAS/LAZ file (skips download)",
     )
     parser.add_argument(
-        "--subsample", type=float, default=0.25,
+        "--subsample",
+        type=float,
+        default=0.25,
         help="Fraction of points to use (default 0.25 for speed)",
     )
     parser.add_argument(
-        "--no-viz", action="store_true",
+        "--no-viz",
+        action="store_true",
         help="Skip Open3D visualization (headless environments)",
     )
     args = parser.parse_args()
@@ -127,10 +132,11 @@ def main() -> None:
     classified = classify_ground_csf(cloud)
 
     from occulus.types import AerialCloud
+
     if isinstance(classified, AerialCloud) and classified.classification is not None:
         n_ground = int((classified.classification == 2).sum())
         pct = n_ground / cloud.n_points * 100
-        print(f"\n=== CSF Ground Classification ===")
+        print("\n=== CSF Ground Classification ===")
         print(f"  Ground points: {n_ground:,} ({pct:.1f}%)")
         print(f"  Other points : {cloud.n_points - n_ground:,}")
     else:
@@ -140,7 +146,8 @@ def main() -> None:
     try:
         import matplotlib.pyplot as plt
         import numpy as np
-        from _plot_style import apply_report_style, save_figure, add_cross_section_line
+        from _plot_style import add_cross_section_line, apply_report_style, save_figure
+
         apply_report_style()
 
         xyz = cloud.xyz
@@ -151,19 +158,24 @@ def main() -> None:
         ax_hist = fig.add_subplot(gs[1, :])
 
         from occulus.types import AerialCloud
+
         if isinstance(classified, AerialCloud) and classified.classification is not None:
             colors = np.where(classified.classification == 2, 0, 1).astype(float)
-            sc = ax_plan.scatter(xyz[:, 0], xyz[:, 1], c=colors,
-                                 cmap="RdYlGn_r", s=0.3, alpha=0.6, rasterized=True)
+            ax_plan.scatter(
+                xyz[:, 0], xyz[:, 1], c=colors, cmap="RdYlGn_r", s=0.3, alpha=0.6, rasterized=True
+            )
             ax_plan.set_title("Ground Classification (green=ground, red=above)")
         else:
-            ax_plan.scatter(xyz[:, 0], xyz[:, 1], c=xyz[:, 2],
-                            cmap="terrain", s=0.3, alpha=0.6, rasterized=True)
+            ax_plan.scatter(
+                xyz[:, 0], xyz[:, 1], c=xyz[:, 2], cmap="terrain", s=0.3, alpha=0.6, rasterized=True
+            )
             ax_plan.set_title("Louisville, KY — ALS Point Cloud")
-        ax_plan.set_xlabel("Easting (m)"); ax_plan.set_ylabel("Northing (m)")
+        ax_plan.set_xlabel("Easting (m)")
+        ax_plan.set_ylabel("Northing (m)")
 
-        add_cross_section_line(ax_plan, ax_prof, xyz, y_frac=0.5,
-                               band_frac=0.03, label="Cross Section A\u2013A\u2032")
+        add_cross_section_line(
+            ax_plan, ax_prof, xyz, y_frac=0.5, band_frac=0.03, label="Cross Section A\u2013A\u2032"
+        )
 
         ax_hist.hist(xyz[:, 2], bins=60, color="#4682B4", alpha=0.75, edgecolor="white")
         ax_hist.set_xlabel("Elevation (m NAVD88)")
@@ -173,16 +185,21 @@ def main() -> None:
         fig.suptitle(
             "USGS 3DEP LiDAR — Eastern Kentucky (CSF Ground Classification)\n"
             f"Points: {cloud.n_points:,}  |  Z range: {stats.z_min:.1f}\u2013{stats.z_max:.1f} m",
-            fontsize=12, fontweight="bold",
+            fontsize=12,
+            fontweight="bold",
         )
         _out_dir = Path(__file__).parent.parent / "outputs"
         _out_dir.mkdir(parents=True, exist_ok=True)
         out = _out_dir / "kentucky_ground_classification.png"
-        save_figure(fig, out, alt_text=(
-            "Four-panel figure showing Kentucky LiDAR ground classification: "
-            "plan view with CSF ground/above-ground coloring, east-west elevation "
-            "cross-section, and elevation histogram."
-        ))
+        save_figure(
+            fig,
+            out,
+            alt_text=(
+                "Four-panel figure showing Kentucky LiDAR ground classification: "
+                "plan view with CSF ground/above-ground coloring, east-west elevation "
+                "cross-section, and elevation histogram."
+            ),
+        )
         logger.info("Saved → %s", out)
         plt.close()
     except ImportError:
@@ -191,8 +208,9 @@ def main() -> None:
     # -- Visualization --------------------------------------------------------
     if not args.no_viz:
         try:
-            from occulus.viz import visualize_segments
             import numpy as np
+
+            from occulus.viz import visualize_segments
 
             if isinstance(classified, AerialCloud) and classified.classification is not None:
                 # Label ground=0, vegetation/other=1
@@ -202,12 +220,17 @@ def main() -> None:
 
             if labels is not None:
                 logger.info("Opening Open3D viewer…")
-                visualize_segments(classified, labels, window_name="Kentucky ALS — Ground Classification")
+                visualize_segments(
+                    classified, labels, window_name="Kentucky ALS — Ground Classification"
+                )
             else:
                 from occulus.viz import visualize
+
                 visualize(classified, window_name="Kentucky ALS")
         except ImportError:
-            logger.warning("open3d not installed — skipping visualization. Install with: pip install occulus[viz]")
+            logger.warning(
+                "open3d not installed — skipping visualization. Install with: pip install occulus[viz]"
+            )
 
 
 if __name__ == "__main__":

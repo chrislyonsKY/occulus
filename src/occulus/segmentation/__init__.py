@@ -25,9 +25,9 @@ from occulus.segmentation.ground import classify_ground_csf, classify_ground_pmf
 from occulus.segmentation.objects import SegmentationResult, cluster_dbscan, segment_trees
 
 __all__ = [
+    "SegmentationResult",
     "classify_ground_csf",
     "classify_ground_pmf",
     "cluster_dbscan",
     "segment_trees",
-    "SegmentationResult",
 ]

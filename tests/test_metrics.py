@@ -16,10 +16,10 @@ from occulus.metrics import (
 )
 from occulus.types import AerialCloud, PointCloud, TerrestrialCloud
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def unit_cube_cloud() -> PointCloud:
@@ -35,15 +35,19 @@ def classified_aerial_cloud() -> AerialCloud:
     n_ground = 500
     n_veg = 300
     # Ground near z=0
-    ground = np.column_stack((
-        rng.random((n_ground, 2)) * 50.0,
-        rng.random(n_ground) * 0.1,
-    ))
+    ground = np.column_stack(
+        (
+            rng.random((n_ground, 2)) * 50.0,
+            rng.random(n_ground) * 0.1,
+        )
+    )
     # Vegetation above z=1
-    veg = np.column_stack((
-        rng.random((n_veg, 2)) * 50.0,
-        rng.random(n_veg) * 5.0 + 1.0,
-    ))
+    veg = np.column_stack(
+        (
+            rng.random((n_veg, 2)) * 50.0,
+            rng.random(n_veg) * 5.0 + 1.0,
+        )
+    )
     xyz = np.vstack((ground, veg)).astype(np.float64)
     classification = np.zeros(n_ground + n_veg, dtype=np.uint8)
     classification[:n_ground] = 2  # ground
@@ -54,6 +58,7 @@ def classified_aerial_cloud() -> AerialCloud:
 # ---------------------------------------------------------------------------
 # compute_cloud_statistics
 # ---------------------------------------------------------------------------
+
 
 class TestComputeCloudStatistics:
     """Tests for compute_cloud_statistics."""
@@ -106,6 +111,7 @@ class TestComputeCloudStatistics:
 # point_density
 # ---------------------------------------------------------------------------
 
+
 class TestPointDensity:
     """Tests for point_density."""
 
@@ -141,6 +147,7 @@ class TestPointDensity:
 # ---------------------------------------------------------------------------
 # canopy_height_model
 # ---------------------------------------------------------------------------
+
 
 class TestCanopyHeightModel:
     """Tests for canopy_height_model."""
@@ -188,6 +195,7 @@ class TestCanopyHeightModel:
 # ---------------------------------------------------------------------------
 # coverage_statistics
 # ---------------------------------------------------------------------------
+
 
 class TestCoverageStatistics:
     """Tests for coverage_statistics."""

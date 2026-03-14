@@ -9,7 +9,7 @@ Data source
 -----------
 USGS 3DEP — KY Metro Louisville B2 2019 (public domain).
 URL : https://rockyweb.usgs.gov/vdelivery/Datasets/Staged/Elevation/LPC/Projects/
-      
+
       KY_CentralEast_A23/KY_CentralEast_1_A23/LAZ/USGS_LPC_KY_CentralEast_A23_N088E243.laz
 
 Usage
@@ -68,12 +68,13 @@ def _fetch(url: str, dest: Path) -> Path:
 def main() -> None:
     """Run the CSF vs PMF comparison demo."""
     parser = argparse.ArgumentParser(description="CSF vs PMF ground classification comparison")
-    parser.add_argument("--input", type=Path, default=None,
-                        help="Local LAS/LAZ file (skips download)")
-    parser.add_argument("--subsample", type=float, default=0.3,
-                        help="Read-time subsample fraction (default 0.3)")
-    parser.add_argument("--no-viz", action="store_true",
-                        help="Skip Open3D visualization")
+    parser.add_argument(
+        "--input", type=Path, default=None, help="Local LAS/LAZ file (skips download)"
+    )
+    parser.add_argument(
+        "--subsample", type=float, default=0.3, help="Read-time subsample fraction (default 0.3)"
+    )
+    parser.add_argument("--no-viz", action="store_true", help="Skip Open3D visualization")
     args = parser.parse_args()
 
     import numpy as np
@@ -104,8 +105,10 @@ def main() -> None:
     print(f"  Total points : {cloud.n_points:,}")
 
     if (
-        isinstance(csf_result, AerialCloud) and csf_result.classification is not None
-        and isinstance(pmf_result, AerialCloud) and pmf_result.classification is not None
+        isinstance(csf_result, AerialCloud)
+        and csf_result.classification is not None
+        and isinstance(pmf_result, AerialCloud)
+        and pmf_result.classification is not None
     ):
         csf_ground = csf_result.classification == 2
         pmf_ground = pmf_result.classification == 2
@@ -134,14 +137,17 @@ def main() -> None:
     try:
         import matplotlib.pyplot as plt
         from _plot_style import CMAP_CATEGORY, apply_report_style, save_figure
+
         apply_report_style()
         xyz = cloud.xyz
 
         fig, axes = plt.subplots(1, 2, figsize=(14, 6))
 
         if (
-            isinstance(csf_result, AerialCloud) and csf_result.classification is not None
-            and isinstance(pmf_result, AerialCloud) and pmf_result.classification is not None
+            isinstance(csf_result, AerialCloud)
+            and csf_result.classification is not None
+            and isinstance(pmf_result, AerialCloud)
+            and pmf_result.classification is not None
         ):
             csf_g = csf_result.classification == 2
             pmf_g = pmf_result.classification == 2
@@ -149,32 +155,50 @@ def main() -> None:
             cat[csf_g & ~pmf_g] = 1
             cat[~csf_g & pmf_g] = 2
             cat[~csf_g & ~pmf_g] = 3
-            sc = axes[0].scatter(xyz[:, 0], xyz[:, 1], c=cat,
-                                 cmap=CMAP_CATEGORY, s=0.3, alpha=0.6, rasterized=True, vmin=0, vmax=3)
-            axes[0].set_title("CSF vs PMF: both=blue, CSF only=orange, PMF only=green, neither=red")
+            axes[0].scatter(
+                xyz[:, 0],
+                xyz[:, 1],
+                c=cat,
+                cmap=CMAP_CATEGORY,
+                s=0.3,
+                alpha=0.6,
+                rasterized=True,
+                vmin=0,
+                vmax=3,
+            )
+            axes[0].set_title("CSF vs PMF Classification")
         else:
-            axes[0].scatter(xyz[:, 0], xyz[:, 1], c=xyz[:, 2],
-                            cmap="terrain", s=0.3, rasterized=True)
+            axes[0].scatter(
+                xyz[:, 0], xyz[:, 1], c=xyz[:, 2], cmap="terrain", s=0.3, rasterized=True
+            )
             axes[0].set_title("Eastern Kentucky — ALS Point Cloud")
-        axes[0].set_xlabel("Easting (m)"); axes[0].set_ylabel("Northing (m)")
+        axes[0].set_xlabel("Easting (m)")
+        axes[0].set_ylabel("Northing (m)")
 
         axes[1].hist(xyz[:, 2], bins=60, color="#4169E1", alpha=0.75, edgecolor="white")
-        axes[1].set_xlabel("Elevation (m)"); axes[1].set_ylabel("Point count")
+        axes[1].set_xlabel("Elevation (m)")
+        axes[1].set_ylabel("Point count")
         axes[1].set_title("Elevation Distribution")
 
         fig.suptitle(
-            "USGS 3DEP LiDAR — CSF vs PMF Ground Classification, Eastern KY\n"
+            "USGS 3DEP LiDAR — CSF vs PMF Ground Classification\n"
             f"Agreement: {agreement_pct:.1f}%  |  Jaccard: {jaccard:.3f}",
-            fontsize=12, fontweight="bold",
+            fontsize=11,
+            fontweight="bold",
         )
+        plt.tight_layout(rect=[0, 0, 1, 0.92])
         _out_dir = Path(__file__).parent.parent / "outputs"
         _out_dir.mkdir(parents=True, exist_ok=True)
         out = _out_dir / "ground_comparison_csf_pmf.png"
-        save_figure(fig, out, alt_text=(
-            "Two-panel figure comparing CSF and PMF ground classification: plan view "
-            "colored by agreement category (both, CSF only, PMF only, neither) and "
-            "elevation histogram."
-        ))
+        save_figure(
+            fig,
+            out,
+            alt_text=(
+                "Two-panel figure comparing CSF and PMF ground classification: plan view "
+                "colored by agreement category (both, CSF only, PMF only, neither) and "
+                "elevation histogram."
+            ),
+        )
         logger.info("Saved → %s", out)
         plt.close()
     except ImportError:
@@ -184,9 +208,12 @@ def main() -> None:
     if not args.no_viz:
         try:
             from occulus.viz import visualize_segments
+
             if (
-                isinstance(csf_result, AerialCloud) and csf_result.classification is not None
-                and isinstance(pmf_result, AerialCloud) and pmf_result.classification is not None
+                isinstance(csf_result, AerialCloud)
+                and csf_result.classification is not None
+                and isinstance(pmf_result, AerialCloud)
+                and pmf_result.classification is not None
             ):
                 # Encode: 0=both ground, 1=CSF only, 2=PMF only, 3=neither
                 labels = np.zeros(cloud.n_points, dtype="int32")
@@ -196,8 +223,9 @@ def main() -> None:
                 labels[~csf_g & pmf_g] = 2
                 labels[~csf_g & ~pmf_g] = 3
                 logger.info("Opening Open3D viewer…")
-                visualize_segments(cloud, labels,
-                                   window_name="CSF vs PMF (0=both, 1=CSF, 2=PMF, 3=neither)")
+                visualize_segments(
+                    cloud, labels, window_name="CSF vs PMF (0=both, 1=CSF, 2=PMF, 3=neither)"
+                )
         except ImportError:
             logger.warning("open3d not installed — skipping visualization.")
 

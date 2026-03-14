@@ -71,8 +71,9 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Occulus urban terrain model demo")
     parser.add_argument("--input", type=Path, default=None)
     parser.add_argument("--subsample", type=float, default=0.3)
-    parser.add_argument("--resolution", type=float, default=0.5,
-                        help="DTM grid resolution in metres (default 0.5)")
+    parser.add_argument(
+        "--resolution", type=float, default=0.5, help="DTM grid resolution in metres (default 0.5)"
+    )
     parser.add_argument("--no-viz", action="store_true")
     args = parser.parse_args()
 
@@ -80,7 +81,7 @@ def main() -> None:
 
     from occulus.filters import statistical_outlier_removal
     from occulus.io import read
-    from occulus.metrics import canopy_height_model, compute_cloud_statistics, point_density
+    from occulus.metrics import compute_cloud_statistics, point_density
     from occulus.segmentation import classify_ground_csf
     from occulus.types import AerialCloud
 
@@ -95,7 +96,7 @@ def main() -> None:
 
     # -- Remove outliers before terrain modelling ----------------------------
     logger.info("Applying statistical outlier removal…")
-    cloud_clean = statistical_outlier_removal(cloud, nb_neighbors=16, std_ratio=2.0)
+    cloud_clean, _mask = statistical_outlier_removal(cloud, nb_neighbors=16, std_ratio=2.0)
     logger.info("  %d → %d points after SOR", cloud.n_points, cloud_clean.n_points)
 
     # -- Ground classification ------------------------------------------------
@@ -116,7 +117,7 @@ def main() -> None:
         logger.info("Building DTM from %d ground points…", n_ground)
 
         # Build a ground-only cloud for DTM
-        ground_stats = compute_cloud_statistics(classified)
+        compute_cloud_statistics(classified)
         ground_z = classified.xyz[ground_mask, 2]
 
         print("\n=== Bare-Earth DTM Statistics ===")
@@ -136,8 +137,10 @@ def main() -> None:
     # -- Visualization --------------------------------------------------------
     if not args.no_viz:
         try:
-            from occulus.viz import visualize_segments
             import numpy as np
+
+            from occulus.viz import visualize_segments
+
             if isinstance(classified, AerialCloud) and classified.classification is not None:
                 labels = np.where(classified.classification == 2, 0, 1).astype("int32")
                 logger.info("Opening Open3D viewer…")

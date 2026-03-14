@@ -88,7 +88,7 @@ def main() -> None:
 
     # Step 2: Outlier removal
     logger.info("[2/9] Statistical outlier removal…")
-    clean = statistical_outlier_removal(cloud, nb_neighbors=16, std_ratio=2.5)
+    clean, _mask = statistical_outlier_removal(cloud, nb_neighbors=16, std_ratio=2.5)
     removed = cloud.n_points - clean.n_points
     logger.info("  removed %d outliers (%.1f%%)", removed, removed / cloud.n_points * 100)
 
@@ -150,6 +150,7 @@ def main() -> None:
 
     if chm is not None:
         import numpy as np
+
         valid = chm[~np.isnan(chm)]
         print(f"  CHM shape        : {chm.shape[0]} × {chm.shape[1]}")
         print(f"  Max canopy ht    : {valid.max():.1f} m" if valid.size else "")
@@ -166,21 +167,28 @@ def main() -> None:
             import matplotlib.pyplot as plt
             import numpy as np
             from _plot_style import CMAP_CANOPY, apply_report_style, save_figure
+
             apply_report_style()
             fig, ax = plt.subplots(figsize=(10, 8))
-            im = ax.imshow(chm, origin="lower", cmap=CMAP_CANOPY,
-                           extent=[xe[0], xe[-1], ye[0], ye[-1]])
+            im = ax.imshow(
+                chm, origin="lower", cmap=CMAP_CANOPY, extent=[xe[0], xe[-1], ye[0], ye[-1]]
+            )
             plt.colorbar(im, ax=ax, label="Canopy height (m)")
             ax.set_title(
                 "Full ALS Workflow — Canopy Height Model\n"
                 f"Points: {cloud.n_points:,}  |  Trees: {seg.n_segments if seg else 'N/A'}"
             )
-            ax.set_xlabel("Easting (m)"); ax.set_ylabel("Northing (m)")
+            ax.set_xlabel("Easting (m)")
+            ax.set_ylabel("Northing (m)")
             img_out = args.output_dir / "full_als_chm.png"
-            save_figure(fig, img_out, alt_text=(
-                "Canopy height model raster from the full ALS workflow, showing tree "
-                "canopy heights across an eastern Kentucky forested tile."
-            ))
+            save_figure(
+                fig,
+                img_out,
+                alt_text=(
+                    "Canopy height model raster from the full ALS workflow, showing tree "
+                    "canopy heights across an eastern Kentucky forested tile."
+                ),
+            )
             logger.info("CHM image → %s", img_out)
             plt.close()
         except ImportError:
@@ -189,6 +197,7 @@ def main() -> None:
     if not args.no_viz and seg is not None:
         try:
             from occulus.viz import visualize_segments
+
             visualize_segments(classified, seg.labels, window_name="Full ALS Workflow")
         except ImportError:
             logger.warning("open3d not installed.")

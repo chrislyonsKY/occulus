@@ -99,7 +99,7 @@ def estimate_normals(
         pts = xyz[neighbours]
         centred = pts - pts.mean(axis=0)
         cov = centred.T @ centred / len(pts)
-        eigenvalues, eigenvectors = np.linalg.eigh(cov)
+        _eigenvalues, eigenvectors = np.linalg.eigh(cov)
         # Smallest eigenvalue → most perpendicular direction = normal
         normals[i] = eigenvectors[:, 0]
 
@@ -140,14 +140,10 @@ def orient_normals_to_viewpoint(
         If the cloud has no normals or ``viewpoint`` is not a (3,) array.
     """
     if not cloud.has_normals:
-        raise OcculusValidationError(
-            "Cloud has no normals. Run estimate_normals() first."
-        )
+        raise OcculusValidationError("Cloud has no normals. Run estimate_normals() first.")
     viewpoint = np.asarray(viewpoint, dtype=np.float64)
     if viewpoint.shape != (3,):
-        raise OcculusValidationError(
-            f"viewpoint must be a (3,) array, got shape {viewpoint.shape}"
-        )
+        raise OcculusValidationError(f"viewpoint must be a (3,) array, got shape {viewpoint.shape}")
 
     assert cloud.normals is not None  # guarded above
     normals = cloud.normals.copy()
@@ -158,7 +154,8 @@ def orient_normals_to_viewpoint(
 
     logger.debug(
         "orient_normals_to_viewpoint: flipped %d/%d normals",
-        flip_mask.sum(), cloud.n_points,
+        flip_mask.sum(),
+        cloud.n_points,
     )
 
     return _copy_with_normals(cloud, normals)

@@ -22,10 +22,10 @@ from occulus.types import PointCloud
 logger = logging.getLogger(__name__)
 
 __all__ = [
-    "compute_fpfh",
-    "ransac_registration",
     "AlignmentResult",
     "align_scans",
+    "compute_fpfh",
+    "ransac_registration",
 ]
 
 
@@ -114,8 +114,8 @@ def compute_fpfh(
         # Bin into 11 bins each (→ 33-dim descriptor)
         bins = 11
         spfh[i, :bins], _ = np.histogram(alpha, bins=bins, range=(-1.0, 1.0))
-        spfh[i, bins:2*bins], _ = np.histogram(phi, bins=bins, range=(-1.0, 1.0))
-        spfh[i, 2*bins:], _ = np.histogram(theta, bins=bins, range=(-np.pi, np.pi))
+        spfh[i, bins : 2 * bins], _ = np.histogram(phi, bins=bins, range=(-1.0, 1.0))
+        spfh[i, 2 * bins :], _ = np.histogram(theta, bins=bins, range=(-np.pi, np.pi))
 
         # Normalise
         row_sum = spfh[i].sum()
@@ -211,7 +211,7 @@ def ransac_registration(
 
     # Build a KD-tree on target feature space to find descriptor matches
     feat_tree = KDTree(target_features)
-    distances, target_idx = feat_tree.query(source_features, k=1, workers=-1)
+    _distances, target_idx = feat_tree.query(source_features, k=1, workers=-1)
     target_idx = target_idx.ravel()
 
     # All candidate correspondences (source_i → target_idx[i])
@@ -260,8 +260,8 @@ def ransac_registration(
             inlier_ratio = best_inliers / n_corr
 
             # Adaptive early exit (Hartley & Zisserman)
-            eps = max(1e-9, 1.0 - inlier_ratio)
-            k_adaptive = np.log(1 - confidence) / np.log(1 - (inlier_ratio ** ransac_n) + 1e-12)
+            max(1e-9, 1.0 - inlier_ratio)
+            k_adaptive = np.log(1 - confidence) / np.log(1 - (inlier_ratio**ransac_n) + 1e-12)
             max_adaptive_iter = min(max_iterations, int(k_adaptive) + 1)
 
     if best_inliers == 0:
@@ -286,7 +286,10 @@ def ransac_registration(
 
     logger.info(
         "RANSAC: best_inliers=%d/%d fitness=%.3f rmse=%.4f",
-        best_inliers, n_corr, fitness, rmse,
+        best_inliers,
+        n_corr,
+        fitness,
+        rmse,
     )
     return RegistrationResult(
         transformation=best_transform,
@@ -324,9 +327,7 @@ class AlignmentResult:
         self.transformations = transformations
         self.pairwise_results = pairwise_results
         self.global_rmse = (
-            float(np.mean([r.inlier_rmse for r in pairwise_results]))
-            if pairwise_results
-            else 0.0
+            float(np.mean([r.inlier_rmse for r in pairwise_results])) if pairwise_results else 0.0
         )
 
 

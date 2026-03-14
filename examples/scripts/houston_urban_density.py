@@ -97,7 +97,6 @@ def main() -> None:
     cloud = read(path, platform="aerial", subsample=args.subsample)
     logger.info("Loaded: %s", cloud)
 
-    import numpy as np
     from occulus.types import AerialCloud
 
     stats = compute_cloud_statistics(cloud)
@@ -112,13 +111,13 @@ def main() -> None:
     if isinstance(classified, AerialCloud) and classified.classification is not None:
         n_g = int((classified.classification == 2).sum())
         above = cloud.n_points - n_g
-        print(f"\n=== Ground vs Above-Ground ===")
+        print("\n=== Ground vs Above-Ground ===")
         print(f"  Ground         : {n_g:,} ({n_g / cloud.n_points:.1%})")
         print(f"  Above-ground   : {above:,} ({above / cloud.n_points:.1%}) — buildings + trees")
 
     try:
         cov = coverage_statistics(classified, resolution=args.resolution)
-        print(f"\n=== Coverage Statistics ===")
+        print("\n=== Coverage Statistics ===")
         print(f"  Gap fraction  : {cov.gap_fraction:.2%}")
         print(f"  Mean density  : {cov.mean_density:.1f} pts/m²")
     except Exception as exc:
@@ -126,7 +125,8 @@ def main() -> None:
 
     try:
         import matplotlib.pyplot as plt
-        from _plot_style import CMAP_HEAT, apply_report_style, save_figure, add_cross_section_line
+        from _plot_style import CMAP_HEAT, add_cross_section_line, apply_report_style, save_figure
+
         apply_report_style()
         xyz = cloud.xyz
 
@@ -137,15 +137,22 @@ def main() -> None:
         ax_hist = fig.add_subplot(gs[1, :])
 
         sc = ax_plan.scatter(
-            xyz[:, 0], xyz[:, 1], c=xyz[:, 2],
-            cmap=CMAP_HEAT, s=0.3, alpha=0.5, rasterized=True,
+            xyz[:, 0],
+            xyz[:, 1],
+            c=xyz[:, 2],
+            cmap=CMAP_HEAT,
+            s=0.3,
+            alpha=0.5,
+            rasterized=True,
         )
         plt.colorbar(sc, ax=ax_plan, label="Elevation (m)")
         ax_plan.set_title("Houston Urban — Plan View (Elevation)")
-        ax_plan.set_xlabel("Easting (m)"); ax_plan.set_ylabel("Northing (m)")
+        ax_plan.set_xlabel("Easting (m)")
+        ax_plan.set_ylabel("Northing (m)")
 
-        add_cross_section_line(ax_plan, ax_prof, xyz, y_frac=0.5,
-                               band_frac=0.03, label="Cross Section A\u2013A\u2032")
+        add_cross_section_line(
+            ax_plan, ax_prof, xyz, y_frac=0.5, band_frac=0.03, label="Cross Section A\u2013A\u2032"
+        )
 
         ax_hist.hist(xyz[:, 2], bins=60, color="#4682B4", alpha=0.75, edgecolor="white", log=True)
         ax_hist.set_xlabel("Elevation (m)")
@@ -155,14 +162,19 @@ def main() -> None:
         fig.suptitle(
             "USGS 3DEP LiDAR — Houston, Texas (Urban Density Analysis)\n"
             f"Points: {cloud.n_points:,}  |  Z range: {stats.z_min:.1f}\u2013{stats.z_max:.1f} m",
-            fontsize=12, fontweight="bold",
+            fontsize=12,
+            fontweight="bold",
         )
         out = OUTPUTS / "houston_urban_density.png"
-        save_figure(fig, out, alt_text=(
-            "Four-panel figure showing Houston urban LiDAR analysis: plan view colored "
-            "by elevation showing building footprints, east-west cross-section profile "
-            "through downtown, and log-scale elevation histogram."
-        ))
+        save_figure(
+            fig,
+            out,
+            alt_text=(
+                "Four-panel figure showing Houston urban LiDAR analysis: plan view colored "
+                "by elevation showing building footprints, east-west cross-section profile "
+                "through downtown, and log-scale elevation histogram."
+            ),
+        )
         logger.info("Saved → %s", out)
         plt.close()
     except ImportError:
@@ -171,6 +183,7 @@ def main() -> None:
     if not args.no_viz:
         try:
             from occulus.viz import visualize
+
             visualize(cloud, window_name="Houston Urban LiDAR")
         except ImportError:
             logger.warning("open3d not installed.")

@@ -140,9 +140,9 @@ def _write_las(cloud: PointCloud, path: Path, *, compress: bool) -> Path:
 
         if has_rgb and cloud.rgb is not None:
             # LAS stores 16-bit color
-            las.red = (cloud.rgb[:, 0].astype(np.uint16) * 257)
-            las.green = (cloud.rgb[:, 1].astype(np.uint16) * 257)
-            las.blue = (cloud.rgb[:, 2].astype(np.uint16) * 257)
+            las.red = cloud.rgb[:, 0].astype(np.uint16) * 257
+            las.green = cloud.rgb[:, 1].astype(np.uint16) * 257
+            las.blue = cloud.rgb[:, 2].astype(np.uint16) * 257
 
         las.write(str(path), do_compress=compress)
 
@@ -178,18 +178,14 @@ def _write_ply(cloud: PointCloud, path: Path) -> Path:
     try:
         import open3d as o3d
     except ImportError as exc:
-        raise ImportError(
-            "open3d is required for PLY output: pip install 'occulus[viz]'"
-        ) from exc
+        raise ImportError("open3d is required for PLY output: pip install 'occulus[viz]'") from exc
 
     try:
         pcd = o3d.geometry.PointCloud()
         pcd.points = o3d.utility.Vector3dVector(np.ascontiguousarray(cloud.xyz))
 
         if cloud.normals is not None:
-            pcd.normals = o3d.utility.Vector3dVector(
-                np.ascontiguousarray(cloud.normals)
-            )
+            pcd.normals = o3d.utility.Vector3dVector(np.ascontiguousarray(cloud.normals))
         if cloud.rgb is not None:
             pcd.colors = o3d.utility.Vector3dVector(
                 np.ascontiguousarray(cloud.rgb.astype(np.float64) / 255.0)

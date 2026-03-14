@@ -44,7 +44,7 @@ Each script is self-contained — install the package, run the script.
 | `full_als_workflow.py` | End-to-end aerial LiDAR pipeline (read → classify → CHM → mesh) |
 | `karst_topography.py` | Karst terrain feature detection — sinkholes and ridges |
 | `flood_terrain_analysis.py` | Flood-prone terrain analysis from LiDAR DEMs |
-| `coal_mine_terrain.py` | Appalachian coal mine terrain analysis |
+| `coal_mine_terrain.py` | **Full toolkit demo** — every Occulus module on Appalachian coal mine terrain |
 | `landslide_monitoring.py` | Slope stability and landslide susceptibility analysis |
 | `urban_terrain_model.py` | Urban digital terrain model generation |
 

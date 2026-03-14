@@ -71,7 +71,8 @@ def _fetch(url: str, dest: Path) -> Path:
         logger.error(
             "Download failed: %s\n"
             "Visit https://kyfromabove.ky.gov/ to download tiles manually, "
-            "then use --input.", exc,
+            "then use --input.",
+            exc,
         )
         sys.exit(1)
     return out
@@ -84,30 +85,31 @@ def main() -> None:
     )
     parser.add_argument("--input", type=Path, default=None)
     parser.add_argument(
-        "--county", choices=list(_TILES), default="bluegrass",
+        "--county",
+        choices=list(_TILES),
+        default="bluegrass",
         help="Demo tile region (default: bluegrass)",
     )
     parser.add_argument("--subsample", type=float, default=0.3)
     parser.add_argument("--no-viz", action="store_true")
     args = parser.parse_args()
 
-    from occulus.filters import statistical_outlier_removal, voxel_downsample
+    from occulus.filters import statistical_outlier_removal
     from occulus.io import read, write
     from occulus.metrics import compute_cloud_statistics, point_density
-    from occulus.normals import estimate_normals
     from occulus.segmentation import classify_ground_csf
     from occulus.types import AerialCloud
 
     cache = Path(tempfile.gettempdir()) / "occulus_kyfromabove"
     cache.mkdir(parents=True, exist_ok=True)
 
-    if args.input:
-        path = args.input
-    else:
-        path = _fetch(_TILES[args.county], cache)
+    path = args.input or _fetch(_TILES[args.county], cache)
 
-    logger.info("Reading KY From Above tile — %s region (%.0f%% subsample)…",
-                args.county, args.subsample * 100)
+    logger.info(
+        "Reading KY From Above tile — %s region (%.0f%% subsample)…",
+        args.county,
+        args.subsample * 100,
+    )
     cloud = read(path, platform="aerial", subsample=args.subsample)
     logger.info("  loaded: %s", cloud)
 
@@ -127,7 +129,7 @@ def main() -> None:
         classified = cloud
     else:
         logger.info("No pre-classification detected — running CSF…")
-        clean = statistical_outlier_removal(cloud, nb_neighbors=16, std_ratio=2.5)
+        clean, _mask = statistical_outlier_removal(cloud, nb_neighbors=16, std_ratio=2.5)
         classified = classify_ground_csf(clean)
 
     stats = compute_cloud_statistics(cloud)
@@ -136,7 +138,9 @@ def main() -> None:
     print("╚══════════════════════════════════════════════╝")
     print(f"  Region      : {args.county.title()}, Kentucky")
     print(f"  Points      : {cloud.n_points:,}")
-    print(f"  Elevation   : {stats.z_min:.2f} – {stats.z_max:.2f} m  ({stats.z_max - stats.z_min:.1f} m relief)")
+    print(
+        f"  Elevation   : {stats.z_min:.2f} – {stats.z_max:.2f} m  ({stats.z_max - stats.z_min:.1f} m relief)"
+    )
     print(f"  Mean elev.  : {stats.z_mean:.2f} m (NAVD 88)")
 
     if isinstance(classified, AerialCloud) and classified.classification is not None:
@@ -146,6 +150,7 @@ def main() -> None:
         # Export ground points for GIS
         ground_mask = classified.classification == 2
         from occulus.types import PointCloud
+
         ground_xyz = classified.xyz[ground_mask]
         ground_cloud = PointCloud(ground_xyz)
         out_path = OUTPUTS / f"kyfromabove_{args.county}_ground.xyz"
@@ -159,27 +164,37 @@ def main() -> None:
     try:
         import matplotlib.pyplot as plt
         from _plot_style import CMAP_ELEVATION, apply_report_style, save_figure
+
         apply_report_style()
 
         fig, axes = plt.subplots(1, 2, figsize=(14, 6))
 
         # Elevation map
-        h, xe2, ye2 = np.histogram2d(cloud.xyz[:, 0], cloud.xyz[:, 1], bins=150,
-                                     weights=cloud.xyz[:, 2])
+        h, _xe2, _ye2 = np.histogram2d(
+            cloud.xyz[:, 0], cloud.xyz[:, 1], bins=150, weights=cloud.xyz[:, 2]
+        )
         cnt, _, _ = np.histogram2d(cloud.xyz[:, 0], cloud.xyz[:, 1], bins=150)
         mean_z = np.where(cnt > 0, h / np.maximum(cnt, 1), np.nan)
-        im0 = axes[0].imshow(mean_z.T, origin="lower",
-                              extent=[cloud.xyz[:, 0].min(), cloud.xyz[:, 0].max(),
-                                      cloud.xyz[:, 1].min(), cloud.xyz[:, 1].max()],
-                              cmap=CMAP_ELEVATION)
+        im0 = axes[0].imshow(
+            mean_z.T,
+            origin="lower",
+            extent=[
+                cloud.xyz[:, 0].min(),
+                cloud.xyz[:, 0].max(),
+                cloud.xyz[:, 1].min(),
+                cloud.xyz[:, 1].max(),
+            ],
+            cmap=CMAP_ELEVATION,
+        )
         plt.colorbar(im0, ax=axes[0], label="Elevation (m NAVD 88)")
         axes[0].set_title(f"KY From Above — {args.county.title()} Region\nDigital Terrain Model")
-        axes[0].set_xlabel("Easting (m)"); axes[0].set_ylabel("Northing (m)")
+        axes[0].set_xlabel("Easting (m)")
+        axes[0].set_ylabel("Northing (m)")
 
         # Density map
-        im1 = axes[1].imshow(density.T, origin="lower",
-                              extent=[xe[0], xe[-1], ye[0], ye[-1]],
-                              cmap="Blues")
+        im1 = axes[1].imshow(
+            density.T, origin="lower", extent=[xe[0], xe[-1], ye[0], ye[-1]], cmap="Blues"
+        )
         plt.colorbar(im1, ax=axes[1], label="Pts / 25 m\u00b2")
         axes[1].set_title("Point Density Map (5 m grid)")
         axes[1].set_xlabel("Easting (m)")
@@ -187,14 +202,19 @@ def main() -> None:
         fig.suptitle(
             f"Kentucky From Above — {args.county.title()} Region (kyfromabove.ky.gov)\n"
             f"Points: {cloud.n_points:,}  |  Relief: {stats.z_max - stats.z_min:.1f} m",
-            fontsize=11, fontweight="bold",
+            fontsize=11,
+            fontweight="bold",
         )
         OUTPUTS.mkdir(parents=True, exist_ok=True)
         out = OUTPUTS / f"kyfromabove_{args.county}.png"
-        save_figure(fig, out, alt_text=(
-            f"Two-panel figure showing KY From Above {args.county.title()} region: "
-            "digital terrain model (left) and point density map (right)."
-        ))
+        save_figure(
+            fig,
+            out,
+            alt_text=(
+                f"Two-panel figure showing KY From Above {args.county.title()} region: "
+                "digital terrain model (left) and point density map (right)."
+            ),
+        )
         logger.info("Saved → %s", out)
         plt.close()
     except ImportError:
@@ -203,6 +223,7 @@ def main() -> None:
     if not args.no_viz:
         try:
             from occulus.viz import visualize
+
             visualize(cloud, window_name=f"KY From Above — {args.county.title()}")
         except ImportError:
             logger.warning("open3d not installed — skipping visualization.")

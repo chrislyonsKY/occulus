@@ -71,8 +71,12 @@ def main() -> None:
     parser.add_argument("--input", type=Path, default=None)
     parser.add_argument("--subsample", type=float, default=0.2)
     parser.add_argument("--voxel-size", type=float, default=0.5)
-    parser.add_argument("--slide-magnitude", type=float, default=1.5,
-                        help="Peak displacement magnitude (m) of synthetic slide")
+    parser.add_argument(
+        "--slide-magnitude",
+        type=float,
+        default=1.5,
+        help="Peak displacement magnitude (m) of synthetic slide",
+    )
     parser.add_argument("--no-viz", action="store_true")
     args = parser.parse_args()
 
@@ -128,7 +132,8 @@ def main() -> None:
 
     logger.info("Running ICP (post → pre)…")
     result = icp_point_to_plane(
-        post_n, pre_n,
+        post_n,
+        pre_n,
         max_correspondence_distance=args.voxel_size * 3,
         max_iterations=200,
     )
@@ -157,6 +162,7 @@ def main() -> None:
     if not args.no_viz:
         try:
             from occulus.viz import visualize_segments
+
             labels = displaced.astype("int32")
             logger.info("Opening Open3D viewer (red = displaced)…")
             visualize_segments(pre_ds, labels, window_name="Landslide Monitoring")

@@ -98,6 +98,7 @@ def main() -> None:
     logger.info("Loaded: %s", cloud)
 
     import numpy as np
+
     from occulus.types import AerialCloud
 
     stats = compute_cloud_statistics(cloud)
@@ -112,14 +113,14 @@ def main() -> None:
     chm = xe = ye = None
     if isinstance(classified, AerialCloud) and classified.classification is not None:
         n_g = int((classified.classification == 2).sum())
-        print(f"\n=== Ground Classification ===")
+        print("\n=== Ground Classification ===")
         print(f"  Ground : {n_g:,} ({n_g / cloud.n_points:.1%})")
 
         try:
             chm, xe, ye = canopy_height_model(classified, resolution=args.resolution)
             cov = coverage_statistics(classified, resolution=args.resolution)
             valid = chm[~np.isnan(chm)]
-            print(f"\n=== Coastal Forest Canopy ===")
+            print("\n=== Coastal Forest Canopy ===")
             if valid.size:
                 print(f"  Max canopy height : {valid.max():.1f} m")
             print(f"  Gap fraction      : {cov.gap_fraction:.2%}")
@@ -128,8 +129,14 @@ def main() -> None:
 
     try:
         import matplotlib.pyplot as plt
-        from _plot_style import (CMAP_CANOPY, CMAP_ELEVATION, apply_report_style,
-                                 save_figure, add_cross_section_line)
+        from _plot_style import (
+            CMAP_CANOPY,
+            CMAP_ELEVATION,
+            add_cross_section_line,
+            apply_report_style,
+            save_figure,
+        )
+
         apply_report_style()
         xyz = cloud.xyz
 
@@ -140,40 +147,56 @@ def main() -> None:
         ax_chm = fig.add_subplot(gs[1, :])
 
         sc = ax_plan.scatter(
-            xyz[:, 0], xyz[:, 1], c=xyz[:, 2],
-            cmap=CMAP_ELEVATION, s=0.3, alpha=0.5, rasterized=True,
+            xyz[:, 0],
+            xyz[:, 1],
+            c=xyz[:, 2],
+            cmap=CMAP_ELEVATION,
+            s=0.3,
+            alpha=0.5,
+            rasterized=True,
         )
         plt.colorbar(sc, ax=ax_plan, label="Elevation (m)")
         ax_plan.set_title("Oregon Coast — Cliff, Beach, and Forest")
-        ax_plan.set_xlabel("Easting (m)"); ax_plan.set_ylabel("Northing (m)")
+        ax_plan.set_xlabel("Easting (m)")
+        ax_plan.set_ylabel("Northing (m)")
 
-        add_cross_section_line(ax_plan, ax_prof, xyz, y_frac=0.5,
-                               band_frac=0.03, label="Cross Section A\u2013A\u2032")
+        add_cross_section_line(
+            ax_plan, ax_prof, xyz, y_frac=0.5, band_frac=0.03, label="Cross Section A\u2013A\u2032"
+        )
 
         if chm is not None and xe is not None:
             im = ax_chm.imshow(
-                chm, origin="lower", cmap=CMAP_CANOPY,
+                chm,
+                origin="lower",
+                cmap=CMAP_CANOPY,
                 extent=[xe[0], xe[-1], ye[0], ye[-1]],
             )
             plt.colorbar(im, ax=ax_chm, label="Canopy height (m)")
             ax_chm.set_title("Coastal Rainforest Canopy Height Model")
-            ax_chm.set_xlabel("Easting (m)"); ax_chm.set_ylabel("Northing (m)")
+            ax_chm.set_xlabel("Easting (m)")
+            ax_chm.set_ylabel("Northing (m)")
         else:
             ax_chm.hist(xyz[:, 2], bins=60, color="#008080", alpha=0.75, edgecolor="white")
-            ax_chm.set_xlabel("Elevation (m)"); ax_chm.set_ylabel("Count")
+            ax_chm.set_xlabel("Elevation (m)")
+            ax_chm.set_ylabel("Count")
             ax_chm.set_title("Elevation Distribution")
 
         fig.suptitle(
             "USGS 3DEP LiDAR — Oregon Pacific Coastline (Cliff-Beach-Forest)\n"
             f"Points: {cloud.n_points:,}  |  Relief: {stats.z_max - stats.z_min:.0f} m",
-            fontsize=12, fontweight="bold",
+            fontsize=12,
+            fontweight="bold",
         )
         out = OUTPUTS / "oregon_coast_terrain.png"
-        save_figure(fig, out, alt_text=(
-            "Four-panel figure showing Oregon coast LiDAR analysis: plan view colored "
-            "by elevation showing sea cliffs and forest, east-west cross-section profile, "
-            "and coastal rainforest canopy height model."
-        ))
+        save_figure(
+            fig,
+            out,
+            alt_text=(
+                "Four-panel figure showing Oregon coast LiDAR analysis: plan view colored "
+                "by elevation showing sea cliffs and forest, east-west cross-section profile, "
+                "and coastal rainforest canopy height model."
+            ),
+        )
         logger.info("Saved → %s", out)
         plt.close()
     except ImportError:
@@ -182,6 +205,7 @@ def main() -> None:
     if not args.no_viz:
         try:
             from occulus.viz import visualize
+
             visualize(cloud, window_name="Oregon Coast Terrain")
         except ImportError:
             logger.warning("open3d not installed.")

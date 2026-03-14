@@ -97,7 +97,6 @@ def main() -> None:
     cloud = read(path, platform="aerial", subsample=args.subsample)
     logger.info("Loaded: %s", cloud)
 
-    import numpy as np
     from occulus.types import AerialCloud
 
     stats = compute_cloud_statistics(cloud)
@@ -118,7 +117,7 @@ def main() -> None:
 
     try:
         cov = coverage_statistics(classified_csf, resolution=args.resolution)
-        print(f"\n=== Vegetation Coverage ===")
+        print("\n=== Vegetation Coverage ===")
         print(f"  Gap fraction  : {cov.gap_fraction:.2%} (high = sparse desert scrub)")
         print(f"  Mean density  : {cov.mean_density:.1f} pts/m²")
     except Exception as exc:
@@ -126,7 +125,8 @@ def main() -> None:
 
     try:
         import matplotlib.pyplot as plt
-        from _plot_style import CMAP_HEAT, apply_report_style, save_figure, add_cross_section_line
+        from _plot_style import CMAP_HEAT, add_cross_section_line, apply_report_style, save_figure
+
         apply_report_style()
         xyz = cloud.xyz
 
@@ -137,15 +137,22 @@ def main() -> None:
         ax_hist = fig.add_subplot(gs[1, :])
 
         sc = ax_plan.scatter(
-            xyz[:, 0], xyz[:, 1], c=xyz[:, 2],
-            cmap=CMAP_HEAT, s=0.3, alpha=0.5, rasterized=True,
+            xyz[:, 0],
+            xyz[:, 1],
+            c=xyz[:, 2],
+            cmap=CMAP_HEAT,
+            s=0.3,
+            alpha=0.5,
+            rasterized=True,
         )
         plt.colorbar(sc, ax=ax_plan, label="Elevation (m)")
         ax_plan.set_title("Sonoran Desert — Basin and Range Topography")
-        ax_plan.set_xlabel("Easting (m)"); ax_plan.set_ylabel("Northing (m)")
+        ax_plan.set_xlabel("Easting (m)")
+        ax_plan.set_ylabel("Northing (m)")
 
-        add_cross_section_line(ax_plan, ax_prof, xyz, y_frac=0.5,
-                               band_frac=0.03, label="Cross Section A\u2013A\u2032")
+        add_cross_section_line(
+            ax_plan, ax_prof, xyz, y_frac=0.5, band_frac=0.03, label="Cross Section A\u2013A\u2032"
+        )
 
         ax_hist.hist(xyz[:, 2], bins=60, color="#B8860B", alpha=0.75, edgecolor="white")
         ax_hist.set_xlabel("Elevation (m)")
@@ -155,13 +162,18 @@ def main() -> None:
         fig.suptitle(
             "USGS 3DEP LiDAR — Sonoran Desert, Arizona (Basin and Range)\n"
             f"Points: {cloud.n_points:,}  |  Relief: {stats.z_max - stats.z_min:.0f} m",
-            fontsize=12, fontweight="bold",
+            fontsize=12,
+            fontweight="bold",
         )
         out = OUTPUTS / "arizona_desert_terrain.png"
-        save_figure(fig, out, alt_text=(
-            "Four-panel figure showing Sonoran Desert LiDAR analysis: plan view colored "
-            "by elevation, east-west cross-section profile, and elevation histogram."
-        ))
+        save_figure(
+            fig,
+            out,
+            alt_text=(
+                "Four-panel figure showing Sonoran Desert LiDAR analysis: plan view colored "
+                "by elevation, east-west cross-section profile, and elevation histogram."
+            ),
+        )
         logger.info("Saved → %s", out)
         plt.close()
     except ImportError:
@@ -170,6 +182,7 @@ def main() -> None:
     if not args.no_viz:
         try:
             from occulus.viz import visualize
+
             visualize(cloud, window_name="Arizona Desert — Sonoran Basin")
         except ImportError:
             logger.warning("open3d not installed.")

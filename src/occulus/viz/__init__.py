@@ -136,7 +136,9 @@ def visualize_registration(
 
     logger.debug(
         "visualize_registration: fitness=%.3f rmse=%.4f converged=%s",
-        result.fitness, result.inlier_rmse, result.converged,
+        result.fitness,
+        result.inlier_rmse,
+        result.converged,
     )
     o3d.visualization.draw_geometries(
         [src_pcd, tgt_pcd],
@@ -209,7 +211,8 @@ def visualize_segments(
 
     logger.debug(
         "visualize_segments: %d segments + %d noise points",
-        n_labels, int((labels == -1).sum()),
+        n_labels,
+        int((labels == -1).sum()),
     )
     o3d.visualization.draw_geometries([pcd], window_name=window_name)
 

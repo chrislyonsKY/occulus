@@ -98,7 +98,10 @@ def cluster_dbscan(
 
     logger.info(
         "cluster_dbscan: %d clusters, %d noise points (eps=%.3f, min_samples=%d)",
-        n_segments, int((labels == -1).sum()), eps, min_samples,
+        n_segments,
+        int((labels == -1).sum()),
+        eps,
+        min_samples,
     )
 
     return SegmentationResult(
@@ -157,7 +160,8 @@ def segment_trees(
     if cloud.n_points == 0:
         raise OcculusSegmentationError("Cannot segment trees from an empty cloud")
 
-    from scipy.ndimage import label as nd_label, maximum_filter  # type: ignore[import-untyped]
+    from scipy.ndimage import label as nd_label  # type: ignore[import-untyped]
+    from scipy.ndimage import maximum_filter
 
     xyz = cloud.xyz
     x_min, y_min = xyz[:, 0].min(), xyz[:, 1].min()
@@ -188,8 +192,7 @@ def segment_trees(
 
     if n_tops == 0:
         raise OcculusSegmentationError(
-            f"No trees detected (min_height={min_height}). "
-            "Try lowering min_height or resolution."
+            f"No trees detected (min_height={min_height}). Try lowering min_height or resolution."
         )
 
     # Marker-controlled watershed via priority flood
@@ -216,7 +219,9 @@ def segment_trees(
     n_segments = len(segment_sizes)
     logger.info(
         "segment_trees: %d trees detected from %d treetops (res=%.2f)",
-        n_segments, n_tops, resolution,
+        n_segments,
+        n_tops,
+        resolution,
     )
 
     return SegmentationResult(
@@ -317,7 +322,7 @@ def _marker_watershed(
     visited = labels > 0
 
     while heap:
-        neg_h, r, c = heapq.heappop(heap)
+        _neg_h, r, c = heapq.heappop(heap)
         lbl = labels[r, c]
         for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
             nr, nc = r + dr, c + dc

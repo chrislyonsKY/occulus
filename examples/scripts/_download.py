@@ -21,6 +21,7 @@ def _ssl_ctx() -> ssl.SSLContext:
     """Return an SSL context using certifi root certificates."""
     try:
         import certifi
+
         ctx = ssl.create_default_context(cafile=certifi.where())
     except ImportError:
         ctx = ssl.create_default_context()
@@ -64,6 +65,7 @@ def download(url: str, dest: Path, label: str = "") -> Path:
 def fetch_json(url: str) -> dict:
     """Fetch JSON from *url* using certifi SSL and browser user-agent."""
     import json
+
     req = urllib.request.Request(url, headers={"User-Agent": _USER_AGENT})
     try:
         with urllib.request.urlopen(req, context=_ssl_ctx(), timeout=20) as resp:
@@ -87,12 +89,15 @@ def find_usgs_tile(bbox: str) -> str:
         Download URL for the first matching LiDAR tile.
     """
     import urllib.parse
-    params = urllib.parse.urlencode({
-        "datasets": "Lidar Point Cloud (LPC)",
-        "bbox": bbox,
-        "max": 1,
-        "prodFormats": "LAZ",
-    })
+
+    params = urllib.parse.urlencode(
+        {
+            "datasets": "Lidar Point Cloud (LPC)",
+            "bbox": bbox,
+            "max": 1,
+            "prodFormats": "LAZ",
+        }
+    )
     url = f"https://tnmaccess.nationalmap.gov/api/v1/products?{params}"
     data = fetch_json(url)
     items = data.get("items", [])

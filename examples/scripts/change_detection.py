@@ -72,8 +72,9 @@ def main() -> None:
     parser.add_argument("--input", type=Path, default=None)
     parser.add_argument("--subsample", type=float, default=0.2)
     parser.add_argument("--voxel-size", type=float, default=0.5)
-    parser.add_argument("--displacement", type=float, default=0.3,
-                        help="Max synthetic displacement magnitude (m)")
+    parser.add_argument(
+        "--displacement", type=float, default=0.3, help="Max synthetic displacement magnitude (m)"
+    )
     parser.add_argument("--no-viz", action="store_true")
     args = parser.parse_args()
 
@@ -88,6 +89,7 @@ def main() -> None:
     cache_dir.mkdir(parents=True, exist_ok=True)
 
     from occulus.io import read
+
     las_path = args.input or _fetch(_DEMO_URL, cache_dir)
 
     logger.info("Reading 'before' cloud (subsample=%.0f%%)…", args.subsample * 100)
@@ -120,7 +122,8 @@ def main() -> None:
     # -- ICP alignment --------------------------------------------------------
     logger.info("Aligning before/after with ICP…")
     result = icp_point_to_plane(
-        after_n, before_n,
+        after_n,
+        before_n,
         max_correspondence_distance=args.voxel_size * 2,
         max_iterations=150,
     )
@@ -133,7 +136,7 @@ def main() -> None:
     # -- Residual analysis as change proxy -----------------------------------
     # Apply recovered transform to after cloud and compute nearest-point distances
     T = result.transformation
-    ones = np.ones((len(xyz_after), 1), dtype=np.float32)
+    np.ones((len(xyz_after), 1), dtype=np.float32)
     xyz_aligned = (T[:3, :3] @ xyz_after.T).T + T[:3, 3]
     residuals = np.linalg.norm(xyz_aligned - before_ds.xyz, axis=1)
 
@@ -142,14 +145,15 @@ def main() -> None:
     print(f"  Median residual: {float(np.median(residuals)):.4f} m")
     print(f"  Max residual   : {residuals.max():.4f} m")
     print(f"  RMSE           : {float(np.sqrt(np.mean(residuals**2))):.4f} m")
-    print(f"  Points > 0.1 m : {(residuals > 0.1).sum():,}  "
-          f"({(residuals > 0.1).mean()*100:.1f}%)")
+    print(
+        f"  Points > 0.1 m : {(residuals > 0.1).sum():,}  ({(residuals > 0.1).mean() * 100:.1f}%)"
+    )
 
     # Histogram
     bins = [0, 0.05, 0.1, 0.2, 0.5, 1.0, float("inf")]
     labels = ["0–5 cm", "5–10 cm", "10–20 cm", "20–50 cm", "50–100 cm", ">100 cm"]
     print("\n  Residual distribution:")
-    for lo, hi, lab in zip(bins[:-1], bins[1:], labels):
+    for lo, hi, lab in zip(bins[:-1], bins[1:], labels, strict=False):
         count = int(((residuals >= lo) & (residuals < hi)).sum())
         bar = "#" * min(count // max(len(residuals) // 40, 1), 40)
         print(f"    {lab:>12}: {count:6d}  {bar}")
@@ -157,6 +161,7 @@ def main() -> None:
     if not args.no_viz:
         try:
             from occulus.viz import visualize
+
             logger.info("Opening Open3D viewer…")
             visualize(before_ds, window_name="Change Detection — Before Cloud")
         except ImportError:

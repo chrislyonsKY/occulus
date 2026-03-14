@@ -113,8 +113,10 @@ def main() -> None:
 
     logger.info("Running RANSAC global registration…")
     result = ransac_registration(
-        src_n, tgt_n,
-        src_feat, tgt_feat,
+        src_n,
+        tgt_n,
+        src_feat,
+        tgt_feat,
         max_correspondence_distance=args.voxel_size * 3,
         max_iterations=100_000,
     )
@@ -130,9 +132,11 @@ def main() -> None:
     if not args.no_viz:
         try:
             from occulus.viz import visualize_registration
+
             logger.info("Opening Open3D viewer…")
-            visualize_registration(src_n, tgt_n, result,
-                                   window_name="FPFH + RANSAC Global Registration")
+            visualize_registration(
+                src_n, tgt_n, result, window_name="FPFH + RANSAC Global Registration"
+            )
         except ImportError:
             logger.warning("open3d not installed — skipping visualization.")
 

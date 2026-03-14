@@ -52,10 +52,10 @@ def main() -> None:
     """Run Netherlands AHN4 polder terrain analysis."""
     parser = argparse.ArgumentParser(description="Netherlands AHN4 polder terrain")
     parser.add_argument("--input", type=Path, default=None, help="Local LAZ/LAS file")
-    parser.add_argument("--subsample", type=float, default=0.15,
-                        help="Point fraction to keep (AHN4 is very dense)")
-    parser.add_argument("--resolution", type=float, default=1.0,
-                        help="Grid resolution in metres")
+    parser.add_argument(
+        "--subsample", type=float, default=0.15, help="Point fraction to keep (AHN4 is very dense)"
+    )
+    parser.add_argument("--resolution", type=float, default=1.0, help="Grid resolution in metres")
     parser.add_argument("--no-viz", action="store_true")
     args = parser.parse_args()
 
@@ -84,29 +84,36 @@ def main() -> None:
     classified = classify_ground_csf(cloud, cloth_resolution=0.5, class_threshold=0.5)
 
     import numpy as np
+
     from occulus.types import AerialCloud
 
     if isinstance(classified, AerialCloud) and classified.classification is not None:
         n_g = int((classified.classification == 2).sum())
-        print(f"\n=== Ground Classification ===")
+        print("\n=== Ground Classification ===")
         print(f"  Ground : {n_g:,} ({n_g / cloud.n_points:.1%})")
 
         try:
-            chm, xe, ye = canopy_height_model(classified, resolution=args.resolution)
+            chm, _xe, _ye = canopy_height_model(classified, resolution=args.resolution)
             cov = coverage_statistics(classified, resolution=args.resolution)
             valid = chm[~np.isnan(chm)]
-            print(f"\n=== Canopy / Structure ===")
+            print("\n=== Canopy / Structure ===")
             print(f"  CHM cells    : {chm.size:,}")
             if valid.size:
                 print(f"  Max height   : {valid.max():.1f} m")
             print(f"  Gap fraction : {cov.gap_fraction:.2%}")
         except Exception as exc:
             logger.warning("CHM skipped: %s", exc)
-            chm = xe = ye = None
+            chm = None
 
     try:
         import matplotlib.pyplot as plt
-        from _plot_style import CMAP_DIVERGING, apply_report_style, save_figure, add_cross_section_line
+        from _plot_style import (
+            CMAP_DIVERGING,
+            add_cross_section_line,
+            apply_report_style,
+            save_figure,
+        )
+
         apply_report_style()
         xyz = cloud.xyz
 
@@ -117,36 +124,51 @@ def main() -> None:
         ax_hist = fig.add_subplot(gs[1, :])
 
         sc = ax_plan.scatter(
-            xyz[:, 0], xyz[:, 1], c=xyz[:, 2],
-            cmap=CMAP_DIVERGING, s=0.2, alpha=0.6, rasterized=True,
-            vmin=np.percentile(xyz[:, 2], 2), vmax=np.percentile(xyz[:, 2], 98),
+            xyz[:, 0],
+            xyz[:, 1],
+            c=xyz[:, 2],
+            cmap=CMAP_DIVERGING,
+            s=0.2,
+            alpha=0.6,
+            rasterized=True,
+            vmin=np.percentile(xyz[:, 2], 2),
+            vmax=np.percentile(xyz[:, 2], 98),
         )
         plt.colorbar(sc, ax=ax_plan, label="Elevation (m NAP)")
         ax_plan.set_title("Netherlands AHN4 — Elevation Map (Delft Polder)")
-        ax_plan.set_xlabel("Easting (m RD)"); ax_plan.set_ylabel("Northing (m RD)")
+        ax_plan.set_xlabel("Easting (m RD)")
+        ax_plan.set_ylabel("Northing (m RD)")
 
-        add_cross_section_line(ax_plan, ax_prof, xyz, y_frac=0.5,
-                               band_frac=0.03, label="Cross Section A\u2013A\u2032")
+        add_cross_section_line(
+            ax_plan, ax_prof, xyz, y_frac=0.5, band_frac=0.03, label="Cross Section A\u2013A\u2032"
+        )
 
         below = (xyz[:, 2] < 0).sum()
         ax_hist.hist(xyz[:, 2], bins=80, color="#4682B4", alpha=0.75, edgecolor="white")
         ax_hist.axvline(0, color="#D32F2F", linestyle="--", lw=1.5, label="Sea level (0 m NAP)")
         ax_hist.set_xlabel("Elevation (m NAP)")
         ax_hist.set_ylabel("Point count")
-        ax_hist.set_title(f"Elevation Distribution — {below / cloud.n_points:.1%} of points below sea level")
+        ax_hist.set_title(
+            f"Elevation Distribution — {below / cloud.n_points:.1%} of points below sea level"
+        )
         ax_hist.legend(fontsize=9)
 
         fig.suptitle(
             "Netherlands AHN4 LiDAR — Delft Polder (CC0, ahn.nl)\n"
             f"Points: {cloud.n_points:,}  |  Z range: {stats.z_min:.2f}\u2013{stats.z_max:.2f} m NAP",
-            fontsize=12, fontweight="bold",
+            fontsize=12,
+            fontweight="bold",
         )
         out = OUTPUTS / "netherlands_ahn4_polder.png"
-        save_figure(fig, out, alt_text=(
-            "Four-panel figure showing Netherlands AHN4 polder LiDAR analysis: "
-            "plan view colored by elevation showing below-sea-level land, east-west "
-            "cross-section through polder terrain, and elevation histogram with sea level line."
-        ))
+        save_figure(
+            fig,
+            out,
+            alt_text=(
+                "Four-panel figure showing Netherlands AHN4 polder LiDAR analysis: "
+                "plan view colored by elevation showing below-sea-level land, east-west "
+                "cross-section through polder terrain, and elevation histogram with sea level line."
+            ),
+        )
         logger.info("Saved → %s", out)
         plt.close()
     except ImportError:
@@ -155,6 +177,7 @@ def main() -> None:
     if not args.no_viz:
         try:
             from occulus.viz import visualize
+
             visualize(cloud, window_name="Netherlands AHN4 — Delft Polder")
         except ImportError:
             logger.warning("open3d not installed — skipping visualization.")

@@ -69,11 +69,13 @@ def main() -> None:
 
     # Ground-truth transform
     angle = np.radians(12.0)
-    R_gt = np.array([
-        [np.cos(angle), -np.sin(angle), 0.0],
-        [np.sin(angle),  np.cos(angle), 0.0],
-        [0.0,            0.0,           1.0],
-    ])
+    R_gt = np.array(
+        [
+            [np.cos(angle), -np.sin(angle), 0.0],
+            [np.sin(angle), np.cos(angle), 0.0],
+            [0.0, 0.0, 1.0],
+        ]
+    )
     t_gt = np.array([0.25, -0.15, 0.05])
 
     source_xyz = _make_surface(args.n_points, rng)
@@ -94,7 +96,8 @@ def main() -> None:
     logger.info("Running ICP point-to-point…")
     t0 = time.perf_counter()
     res_p2p = icp_point_to_point(
-        src_raw, tgt_raw,
+        src_raw,
+        tgt_raw,
         max_correspondence_distance=0.2,
         max_iterations=200,
     )
@@ -104,7 +107,8 @@ def main() -> None:
     logger.info("Running ICP point-to-plane…")
     t0 = time.perf_counter()
     res_p2pl = icp_point_to_plane(
-        src_n, tgt_n,
+        src_n,
+        tgt_n,
         max_correspondence_distance=0.2,
         max_iterations=200,
     )
@@ -126,15 +130,15 @@ def main() -> None:
     print(f"{'Iterations':<30} {res_p2p.n_iterations:>18d} {res_p2pl.n_iterations:>18d}")
     print(f"{'Wall time (s)':<30} {t_p2p:>18.4f} {t_p2pl:>18.4f}")
     print(f"{'Transform error (Frobenius)':<30} {_t_err(res_p2p):>18.6f} {_t_err(res_p2pl):>18.6f}")
-    print(f"{'Converged':<30} {str(res_p2p.converged):>18} {str(res_p2pl.converged):>18}")
+    print(f"{'Converged':<30} {res_p2p.converged!s:>18} {res_p2pl.converged!s:>18}")
 
     # -- Visualization --------------------------------------------------------
     if not args.no_viz:
         try:
             from occulus.viz import visualize_registration
+
             logger.info("Opening Open3D viewer (point-to-plane result)…")
-            visualize_registration(src_n, tgt_n, res_p2pl,
-                                   window_name="ICP Point-to-Plane")
+            visualize_registration(src_n, tgt_n, res_p2pl, window_name="ICP Point-to-Plane")
         except ImportError:
             logger.warning("open3d not installed — skipping visualization.")
 

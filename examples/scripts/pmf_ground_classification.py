@@ -70,12 +70,13 @@ def _fetch(url: str, dest: Path) -> Path:
 def main() -> None:
     """Run the PMF ground classification demo."""
     parser = argparse.ArgumentParser(description="Occulus PMF ground classification demo")
-    parser.add_argument("--input", type=Path, default=None,
-                        help="Path to a local LAS/LAZ file (skips download)")
-    parser.add_argument("--subsample", type=float, default=0.3,
-                        help="Read-time subsample fraction (default 0.3)")
-    parser.add_argument("--no-viz", action="store_true",
-                        help="Skip Open3D visualization")
+    parser.add_argument(
+        "--input", type=Path, default=None, help="Path to a local LAS/LAZ file (skips download)"
+    )
+    parser.add_argument(
+        "--subsample", type=float, default=0.3, help="Read-time subsample fraction (default 0.3)"
+    )
+    parser.add_argument("--no-viz", action="store_true", help="Skip Open3D visualization")
     args = parser.parse_args()
 
     from occulus.io import read
@@ -106,6 +107,7 @@ def main() -> None:
 
     if isinstance(classified, AerialCloud) and classified.classification is not None:
         import numpy as np
+
         n_ground = int((classified.classification == 2).sum())
         n_other = cloud.n_points - n_ground
         pct = n_ground / cloud.n_points * 100
@@ -120,8 +122,10 @@ def main() -> None:
     # -- Visualization --------------------------------------------------------
     if not args.no_viz:
         try:
-            from occulus.viz import visualize_segments
             import numpy as np
+
+            from occulus.viz import visualize_segments
+
             labels = (
                 np.where(classified.classification == 2, 0, 1).astype("int32")
                 if isinstance(classified, AerialCloud) and classified.classification is not None
@@ -129,10 +133,10 @@ def main() -> None:
             )
             if labels is not None:
                 logger.info("Opening Open3D viewer…")
-                visualize_segments(classified, labels,
-                                   window_name="PMF Ground Classification")
+                visualize_segments(classified, labels, window_name="PMF Ground Classification")
             else:
                 from occulus.viz import visualize
+
                 visualize(classified, window_name="PMF Ground Classification")
         except ImportError:
             logger.warning("open3d not installed — skipping visualization.")

@@ -1,5 +1,11 @@
+<p align="center">
+  <img src="assets/banner.png" alt="occulus — multi-platform point cloud analysis" width="100%">
+</p>
+
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Python](https://img.shields.io/badge/python->=3.11-blue?logo=python&logoColor=white)](https://www.python.org/)
+[![C++17](https://img.shields.io/badge/C%2B%2B-17-blue?logo=cplusplus&logoColor=white)](https://isocpp.org/)
+[![pybind11](https://img.shields.io/badge/pybind11-C%2B%2B%20bindings-green)](https://pybind11.readthedocs.io/)
 [![Hatch](https://img.shields.io/badge/%F0%9F%A5%9A-Hatch-4051b5.svg)](https://hatch.pypa.io/)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![mypy](https://www.mypy-lang.org/static/mypy_badge.svg)](https://mypy-lang.org/)
@@ -9,10 +15,6 @@
 [![PyPI](https://img.shields.io/pypi/v/occulus?color=blue)](https://pypi.org/project/occulus/)
 [![Downloads](https://img.shields.io/pypi/dm/occulus)](https://pypi.org/project/occulus/)
 
-
-<p align="center">
-  <img src="assets/banner.png" alt="occulus — multi-platform point cloud analysis" width="100%">
-</p>
 
 # occulus
 

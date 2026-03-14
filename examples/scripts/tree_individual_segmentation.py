@@ -96,10 +96,10 @@ def main() -> None:
 
     if isinstance(classified, AerialCloud) and classified.classification is not None:
         n_ground = int((classified.classification == 2).sum())
-        print(f"\n  Ground points : {n_ground:,}  ({n_ground/cloud.n_points*100:.1f}%)")
+        print(f"\n  Ground points : {n_ground:,}  ({n_ground / cloud.n_points * 100:.1f}%)")
 
     # -- CHM ------------------------------------------------------------------
-    chm, x_edges, y_edges = canopy_height_model(classified, resolution=args.chm_resolution)
+    chm, _x_edges, _y_edges = canopy_height_model(classified, resolution=args.chm_resolution)
     valid = ~np.isnan(chm)
     print("\n=== Canopy Height Model ===")
     print(f"  Shape         : {chm.shape[0]} × {chm.shape[1]} cells")
@@ -134,18 +134,24 @@ def main() -> None:
     if tree_sizes:
         sizes_arr = np.array(tree_sizes)
         heights_arr = np.array(tree_heights)
-        print(f"\n  Point count per tree:")
-        print(f"    Min / Max / Mean : {sizes_arr.min()} / {sizes_arr.max()} / {sizes_arr.mean():.1f}")
-        print(f"\n  Crown height range (m):")
-        print(f"    Min / Max / Mean : {heights_arr.min():.1f} / {heights_arr.max():.1f} / {heights_arr.mean():.1f}")
+        print("\n  Point count per tree:")
+        print(
+            f"    Min / Max / Mean : {sizes_arr.min()} / {sizes_arr.max()} / {sizes_arr.mean():.1f}"
+        )
+        print("\n  Crown height range (m):")
+        print(
+            f"    Min / Max / Mean : {heights_arr.min():.1f} / {heights_arr.max():.1f} / {heights_arr.mean():.1f}"
+        )
 
     # -- Visualization --------------------------------------------------------
     if not args.no_viz:
         try:
             from occulus.viz import visualize_segments
+
             logger.info("Opening Open3D viewer (%d trees)…", seg.n_segments)
-            visualize_segments(classified, seg.labels,
-                               window_name=f"Eastern KY Forest — {seg.n_segments} trees")
+            visualize_segments(
+                classified, seg.labels, window_name=f"Eastern KY Forest — {seg.n_segments} trees"
+            )
         except ImportError:
             logger.warning("open3d not installed — skipping visualization.")
 

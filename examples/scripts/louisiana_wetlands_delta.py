@@ -112,17 +112,16 @@ def main() -> None:
     logger.info("CSF ground classification (flat terrain settings)…")
     classified = classify_ground_csf(cloud, cloth_resolution=1.0, class_threshold=0.5)
 
-    import numpy as np
     from occulus.types import AerialCloud
 
     if isinstance(classified, AerialCloud) and classified.classification is not None:
         n_g = int((classified.classification == 2).sum())
-        print(f"\n=== Ground Classification ===")
+        print("\n=== Ground Classification ===")
         print(f"  Ground : {n_g:,} ({n_g / cloud.n_points:.1%})")
 
     try:
         cov = coverage_statistics(classified, resolution=args.resolution)
-        print(f"\n=== Coverage Statistics ===")
+        print("\n=== Coverage Statistics ===")
         print(f"  Gap fraction  : {cov.gap_fraction:.2%}")
         print(f"  Mean density  : {cov.mean_density:.1f} pts/m²")
     except Exception as exc:
@@ -130,7 +129,8 @@ def main() -> None:
 
     try:
         import matplotlib.pyplot as plt
-        from _plot_style import CMAP_CANOPY, apply_report_style, save_figure, add_cross_section_line
+        from _plot_style import CMAP_CANOPY, add_cross_section_line, apply_report_style, save_figure
+
         apply_report_style()
         xyz = cloud.xyz
 
@@ -141,15 +141,22 @@ def main() -> None:
         ax_hist = fig.add_subplot(gs[1, :])
 
         sc = ax_plan.scatter(
-            xyz[:, 0], xyz[:, 1], c=xyz[:, 2],
-            cmap=CMAP_CANOPY, s=0.3, alpha=0.5, rasterized=True,
+            xyz[:, 0],
+            xyz[:, 1],
+            c=xyz[:, 2],
+            cmap=CMAP_CANOPY,
+            s=0.3,
+            alpha=0.5,
+            rasterized=True,
         )
         plt.colorbar(sc, ax=ax_plan, label="Elevation (m NAVD88)")
         ax_plan.set_title("Louisiana Wetlands — Plan View Elevation")
-        ax_plan.set_xlabel("Easting (m)"); ax_plan.set_ylabel("Northing (m)")
+        ax_plan.set_xlabel("Easting (m)")
+        ax_plan.set_ylabel("Northing (m)")
 
-        add_cross_section_line(ax_plan, ax_prof, xyz, y_frac=0.5,
-                               band_frac=0.03, label="Cross Section A\u2013A\u2032")
+        add_cross_section_line(
+            ax_plan, ax_prof, xyz, y_frac=0.5, band_frac=0.03, label="Cross Section A\u2013A\u2032"
+        )
 
         ax_hist.hist(xyz[:, 2], bins=60, color="#228B22", alpha=0.75, edgecolor="white")
         ax_hist.axvline(0, color="#D32F2F", linestyle="--", lw=1.5, label="Sea level")
@@ -161,14 +168,19 @@ def main() -> None:
         fig.suptitle(
             "USGS 3DEP LiDAR — Mississippi River Delta, Louisiana\n"
             f"Points: {cloud.n_points:,}  |  Relief: {stats.z_max - stats.z_min:.1f} m",
-            fontsize=12, fontweight="bold",
+            fontsize=12,
+            fontweight="bold",
         )
         out = OUTPUTS / "louisiana_wetlands_delta.png"
-        save_figure(fig, out, alt_text=(
-            "Four-panel figure showing Louisiana wetlands LiDAR analysis: plan view "
-            "colored by elevation, east-west cross-section through deltaic terrain, "
-            "and elevation histogram with sea level reference line."
-        ))
+        save_figure(
+            fig,
+            out,
+            alt_text=(
+                "Four-panel figure showing Louisiana wetlands LiDAR analysis: plan view "
+                "colored by elevation, east-west cross-section through deltaic terrain, "
+                "and elevation histogram with sea level reference line."
+            ),
+        )
         logger.info("Saved → %s", out)
         plt.close()
     except ImportError:
@@ -177,6 +189,7 @@ def main() -> None:
     if not args.no_viz:
         try:
             from occulus.viz import visualize
+
             visualize(cloud, window_name="Louisiana Wetlands Delta")
         except ImportError:
             logger.warning("open3d not installed.")

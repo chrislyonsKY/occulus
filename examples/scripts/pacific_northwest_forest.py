@@ -87,6 +87,7 @@ def main() -> None:
 
     logger.info("Building CHM (resolution=%.1f m)…", args.chm_resolution)
     import numpy as np
+
     chm = xe = ye = None
     cov = None
     if isinstance(classified, AerialCloud):
@@ -94,7 +95,7 @@ def main() -> None:
             chm, xe, ye = canopy_height_model(classified, resolution=args.chm_resolution)
             cov = coverage_statistics(classified, resolution=args.chm_resolution)
             valid = chm[~np.isnan(chm)]
-            print(f"\n=== Canopy Height Model ===")
+            print("\n=== Canopy Height Model ===")
             print(f"  CHM cells : {chm.size:,}")
             print(f"  Max height: {valid.max():.1f} m" if valid.size else "  (empty)")
             print(f"  Mean ht   : {valid[valid > 2].mean():.1f} m (trees > 2 m)")
@@ -109,9 +110,10 @@ def main() -> None:
     seg = None
     if isinstance(classified, AerialCloud):
         try:
-            seg = segment_trees(classified, resolution=args.chm_resolution,
-                                min_height=args.min_height)
-            print(f"\n=== Tree Inventory ===")
+            seg = segment_trees(
+                classified, resolution=args.chm_resolution, min_height=args.min_height
+            )
+            print("\n=== Tree Inventory ===")
             print(f"  Trees detected : {seg.n_segments}")
         except Exception as exc:
             logger.warning("Tree seg skipped: %s", exc)
@@ -120,23 +122,30 @@ def main() -> None:
         try:
             import matplotlib.pyplot as plt
             from _plot_style import CMAP_CANOPY, apply_report_style, save_figure
+
             apply_report_style()
             fig, ax = plt.subplots(figsize=(10, 8))
-            im = ax.imshow(chm, origin="lower", cmap=CMAP_CANOPY,
-                           extent=[xe[0], xe[-1], ye[0], ye[-1]])
+            im = ax.imshow(
+                chm, origin="lower", cmap=CMAP_CANOPY, extent=[xe[0], xe[-1], ye[0], ye[-1]]
+            )
             plt.colorbar(im, ax=ax, label="Height (m)")
             ax.set_title(
                 "Pacific Northwest Old-Growth CHM — Oregon Coast\n"
                 f"Trees: {seg.n_segments if seg else 'N/A'}  |  "
                 f"Max height: {chm[~np.isnan(chm)].max():.1f} m"
             )
-            ax.set_xlabel("Easting (m)"); ax.set_ylabel("Northing (m)")
+            ax.set_xlabel("Easting (m)")
+            ax.set_ylabel("Northing (m)")
             OUTPUTS.mkdir(parents=True, exist_ok=True)
             out = OUTPUTS / "pacific_northwest_chm.png"
-            save_figure(fig, out, alt_text=(
-                "Canopy height model of Pacific Northwest old-growth forest showing "
-                "Douglas-fir and Sitka spruce heights along the Oregon coast."
-            ))
+            save_figure(
+                fig,
+                out,
+                alt_text=(
+                    "Canopy height model of Pacific Northwest old-growth forest showing "
+                    "Douglas-fir and Sitka spruce heights along the Oregon coast."
+                ),
+            )
             logger.info("CHM image → %s", out)
             plt.close()
         except ImportError:
@@ -145,8 +154,8 @@ def main() -> None:
     if not args.no_viz and seg is not None:
         try:
             from occulus.viz import visualize_segments
-            visualize_segments(classified, seg.labels,
-                               window_name="PNW Forest — Individual Trees")
+
+            visualize_segments(classified, seg.labels, window_name="PNW Forest — Individual Trees")
         except ImportError:
             logger.warning("open3d not installed.")
 

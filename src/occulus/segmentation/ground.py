@@ -83,9 +83,7 @@ def classify_ground_csf(
         ground points.
     """
     if cloud.n_points < 10:
-        raise OcculusSegmentationError(
-            f"CSF requires at least 10 points, got {cloud.n_points}"
-        )
+        raise OcculusSegmentationError(f"CSF requires at least 10 points, got {cloud.n_points}")
 
     # Platform-aware defaults
     if cloth_resolution is None:
@@ -95,7 +93,10 @@ def classify_ground_csf(
 
     logger.debug(
         "classify_ground_csf: n=%d res=%.3f rigidness=%d iters=%d",
-        cloud.n_points, cloth_resolution, rigidness, iterations,
+        cloud.n_points,
+        cloth_resolution,
+        rigidness,
+        iterations,
     )
 
     xyz = cloud.xyz
@@ -138,11 +139,14 @@ def classify_ground_csf(
         # Average of 4 cardinal neighbours
         z_padded = np.pad(cloth_z, 1, mode="edge")
         z_avg = (
-            z_padded[:-2, 1:-1]    # up
-            + z_padded[2:, 1:-1]   # down
-            + z_padded[1:-1, :-2]  # left
-            + z_padded[1:-1, 2:]   # right
-        ) / 4.0
+            (
+                z_padded[:-2, 1:-1]  # up
+                + z_padded[2:, 1:-1]  # down
+                + z_padded[1:-1, :-2]  # left
+                + z_padded[1:-1, 2:]  # right
+            )
+            / 4.0
+        )
         cloth_z += (z_avg - cloth_z) * (1.0 - damping)
 
         # Hard constraint: cloth cannot go below terrain
@@ -171,19 +175,22 @@ def classify_ground_csf(
     n_ground = int(ground_mask.sum())
     if n_ground == 0:
         raise OcculusSegmentationError(
-            "CSF produced no ground points. "
-            "Try increasing cloth_resolution or class_threshold."
+            "CSF produced no ground points. Try increasing cloth_resolution or class_threshold."
         )
 
     # Build output classification array
-    base_class = cloud.classification.copy() if cloud.classification is not None \
+    base_class = (
+        cloud.classification.copy()
+        if cloud.classification is not None
         else np.ones(cloud.n_points, dtype=np.uint8)
+    )
     classification = base_class.astype(np.uint8)
     classification[ground_mask] = 2
 
     logger.info(
         "classify_ground_csf: %d ground / %d non-ground points",
-        n_ground, cloud.n_points - n_ground,
+        n_ground,
+        cloud.n_points - n_ground,
     )
 
     return _copy_with_classification(cloud, classification)
@@ -232,9 +239,7 @@ def classify_ground_pmf(
         If the cloud has fewer than 10 points or no ground points are found.
     """
     if cloud.n_points < 10:
-        raise OcculusSegmentationError(
-            f"PMF requires at least 10 points, got {cloud.n_points}"
-        )
+        raise OcculusSegmentationError(f"PMF requires at least 10 points, got {cloud.n_points}")
 
     xyz = cloud.xyz
 
@@ -259,10 +264,12 @@ def classify_ground_pmf(
     if valid.sum() < 3:
         raise OcculusSegmentationError("PMF: insufficient valid cells in grid")
 
-    cells = np.column_stack((
-        np.arange(ny * nx) % nx,
-        np.arange(ny * nx) // nx,
-    ))
+    cells = np.column_stack(
+        (
+            np.arange(ny * nx) % nx,
+            np.arange(ny * nx) // nx,
+        )
+    )
     tree_grid = KDTree(cells[valid])
     _, nn_grid = tree_grid.query(cells[~valid], k=1, workers=-1)
     z_min_grid[~valid] = z_min_grid[valid][nn_grid.ravel()]
@@ -272,11 +279,12 @@ def classify_ground_pmf(
     # Progressively apply morphological opening
     ground_mask = np.ones(cloud.n_points, dtype=bool)
     w = 1
-    prev_surface = z_surface.copy()
+    z_surface.copy()
 
     while w * cell_size <= max_window_size:
         # Morphological erosion then dilation (= opening) with window w
-        from scipy.ndimage import minimum_filter, maximum_filter  # type: ignore[import-untyped]
+        from scipy.ndimage import maximum_filter, minimum_filter  # type: ignore[import-untyped]
+
         eroded = minimum_filter(z_surface, size=2 * w + 1)
         opened = maximum_filter(eroded, size=2 * w + 1)
 
@@ -285,29 +293,31 @@ def classify_ground_pmf(
         dh = min(dh, max_distance)
 
         # A point is non-ground if it exceeds opened surface by more than dh
-        pt_surface = z_surface.ravel()[cell_flat]
+        z_surface.ravel()[cell_flat]
         opened_pt = opened.ravel()[cell_flat]
         ground_mask &= (xyz[:, 2] - opened_pt) <= dh
 
-        prev_surface = opened
         z_surface = opened
         w = min(w * 2, w + 1)  # exponential-ish growth
 
     n_ground = int(ground_mask.sum())
     if n_ground == 0:
         raise OcculusSegmentationError(
-            "PMF produced no ground points. "
-            "Try adjusting cell_size, slope, or max_distance."
+            "PMF produced no ground points. Try adjusting cell_size, slope, or max_distance."
         )
 
-    base_class = cloud.classification.copy() if cloud.classification is not None \
+    base_class = (
+        cloud.classification.copy()
+        if cloud.classification is not None
         else np.ones(cloud.n_points, dtype=np.uint8)
+    )
     classification = base_class.astype(np.uint8)
     classification[ground_mask] = 2
 
     logger.info(
         "classify_ground_pmf: %d ground / %d non-ground points",
-        n_ground, cloud.n_points - n_ground,
+        n_ground,
+        cloud.n_points - n_ground,
     )
 
     return _copy_with_classification(cloud, classification)

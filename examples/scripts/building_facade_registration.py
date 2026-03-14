@@ -51,10 +51,10 @@ def _make_facade(n: int, rng: np.random.Generator) -> np.ndarray:
         x = rng.normal(0.0, 0.01, n)
         # Remove points inside window regions
         win_mask = (
-            ((np.abs(y - (-2.5)) < 0.8) & (z > 2.0) & (z < 4.0)) |
-            ((np.abs(y - (2.5)) < 0.8) & (z > 2.0) & (z < 4.0)) |
-            ((np.abs(y - (-2.5)) < 0.8) & (z > 5.5) & (z < 7.5)) |
-            ((np.abs(y - (2.5)) < 0.8) & (z > 5.5) & (z < 7.5))
+            ((np.abs(y - (-2.5)) < 0.8) & (z > 2.0) & (z < 4.0))
+            | ((np.abs(y - (2.5)) < 0.8) & (z > 2.0) & (z < 4.0))
+            | ((np.abs(y - (-2.5)) < 0.8) & (z > 5.5) & (z < 7.5))
+            | ((np.abs(y - (2.5)) < 0.8) & (z > 5.5) & (z < 7.5))
         )
         wall = np.column_stack([x[~win_mask], y[~win_mask], z[~win_mask]])
         pts.append(wall)
@@ -83,11 +83,13 @@ def main() -> None:
 
     # Viewpoint 2: small rotation about Y + slight lateral offset
     angle = np.radians(5.0)
-    R = np.array([
-        [ np.cos(angle), 0.0, np.sin(angle)],
-        [0.0,            1.0, 0.0],
-        [-np.sin(angle), 0.0, np.cos(angle)],
-    ])
+    R = np.array(
+        [
+            [np.cos(angle), 0.0, np.sin(angle)],
+            [0.0, 1.0, 0.0],
+            [-np.sin(angle), 0.0, np.cos(angle)],
+        ]
+    )
     t = np.array([0.0, 0.2, 0.0])
     facade2 = (R @ facade.T).T + t
     facade2 += rng.normal(0, args.noise, facade2.shape).astype(np.float32)
@@ -102,7 +104,8 @@ def main() -> None:
 
     logger.info("Running ICP point-to-plane…")
     result = icp_point_to_plane(
-        src_n, tgt_n,
+        src_n,
+        tgt_n,
         max_correspondence_distance=0.3,
         max_iterations=200,
     )
@@ -124,9 +127,9 @@ def main() -> None:
     if not args.no_viz:
         try:
             from occulus.viz import visualize_registration
+
             logger.info("Opening Open3D viewer…")
-            visualize_registration(src_n, tgt_n, result,
-                                   window_name="Building Facade Registration")
+            visualize_registration(src_n, tgt_n, result, window_name="Building Facade Registration")
         except ImportError:
             logger.warning("open3d not installed — skipping visualization.")
 

@@ -27,9 +27,9 @@ logger = logging.getLogger(__name__)
 
 __all__ = [
     "MeshResult",
-    "poisson_mesh",
-    "ball_pivoting_mesh",
     "alpha_shape_mesh",
+    "ball_pivoting_mesh",
+    "poisson_mesh",
 ]
 
 
@@ -147,8 +147,7 @@ def poisson_mesh(
     """
     if not cloud.has_normals:
         raise OcculusValidationError(
-            "Poisson reconstruction requires normals. "
-            "Run occulus.normals.estimate_normals() first."
+            "Poisson reconstruction requires normals. Run occulus.normals.estimate_normals() first."
         )
 
     try:
@@ -219,8 +218,7 @@ def ball_pivoting_mesh(
     """
     if not cloud.has_normals:
         raise OcculusValidationError(
-            "BPA reconstruction requires normals. "
-            "Run occulus.normals.estimate_normals() first."
+            "BPA reconstruction requires normals. Run occulus.normals.estimate_normals() first."
         )
 
     try:
@@ -232,6 +230,7 @@ def ball_pivoting_mesh(
 
     if radii is None:
         from scipy.spatial import KDTree  # type: ignore[import-untyped]
+
         tree = KDTree(cloud.xyz)
         distances, _ = tree.query(cloud.xyz, k=2, workers=-1)
         mean_nn = float(distances[:, 1].mean())
@@ -291,9 +290,7 @@ def alpha_shape_mesh(
     pcd = cloud.to_open3d()
 
     try:
-        mesh_o3d = o3d.geometry.TriangleMesh.create_from_point_cloud_alpha_shape(
-            pcd, alpha
-        )
+        mesh_o3d = o3d.geometry.TriangleMesh.create_from_point_cloud_alpha_shape(pcd, alpha)
         mesh_o3d.compute_vertex_normals()
     except Exception as exc:
         raise OcculusMeshError(f"Alpha shape reconstruction failed: {exc}") from exc
@@ -345,9 +342,7 @@ def _o3d_mesh_to_result(mesh: object) -> MeshResult:
     if mesh.has_vertex_colors():
         vertex_colors = np.asarray(mesh.vertex_colors, dtype=np.float64)
 
-    logger.info(
-        "Mesh: %d vertices, %d faces", vertices.shape[0], faces.shape[0]
-    )
+    logger.info("Mesh: %d vertices, %d faces", vertices.shape[0], faces.shape[0])
     return MeshResult(
         vertices=vertices,
         faces=faces,

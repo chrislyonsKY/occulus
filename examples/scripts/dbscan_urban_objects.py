@@ -71,10 +71,12 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="DBSCAN urban object clustering")
     parser.add_argument("--input", type=Path, default=None)
     parser.add_argument("--subsample", type=float, default=0.2)
-    parser.add_argument("--eps", type=float, default=1.5,
-                        help="DBSCAN neighbourhood radius (m, default 1.5)")
-    parser.add_argument("--min-samples", type=int, default=10,
-                        help="DBSCAN minimum points per cluster (default 10)")
+    parser.add_argument(
+        "--eps", type=float, default=1.5, help="DBSCAN neighbourhood radius (m, default 1.5)"
+    )
+    parser.add_argument(
+        "--min-samples", type=int, default=10, help="DBSCAN minimum points per cluster (default 10)"
+    )
     parser.add_argument("--no-viz", action="store_true")
     args = parser.parse_args()
 
@@ -131,7 +133,7 @@ def main() -> None:
     sizes = [int((seg.labels == lbl).sum()) for lbl in unique_labels if lbl >= 0]
     if sizes:
         sizes_arr = np.array(sizes)
-        print(f"\n  Cluster size stats:")
+        print("\n  Cluster size stats:")
         print(f"    Min  : {sizes_arr.min():,} pts")
         print(f"    Max  : {sizes_arr.max():,} pts")
         print(f"    Mean : {sizes_arr.mean():.1f} pts")
@@ -147,9 +149,11 @@ def main() -> None:
     if not args.no_viz:
         try:
             from occulus.viz import visualize_segments
+
             logger.info("Opening Open3D viewer…")
-            visualize_segments(above_ds, seg.labels,
-                               window_name=f"DBSCAN Urban Objects — {n_clusters} clusters")
+            visualize_segments(
+                above_ds, seg.labels, window_name=f"DBSCAN Urban Objects — {n_clusters} clusters"
+            )
         except ImportError:
             logger.warning("open3d not installed — skipping visualization.")
 

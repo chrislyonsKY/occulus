@@ -9,10 +9,10 @@ from occulus.exceptions import OcculusValidationError
 from occulus.normals import estimate_normals, orient_normals_to_viewpoint
 from occulus.types import PointCloud
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def flat_cloud() -> PointCloud:
@@ -36,6 +36,7 @@ def sphere_cloud() -> PointCloud:
 # ---------------------------------------------------------------------------
 # estimate_normals
 # ---------------------------------------------------------------------------
+
 
 class TestEstimateNormals:
     """Tests for estimate_normals."""
@@ -91,6 +92,7 @@ class TestEstimateNormals:
 # ---------------------------------------------------------------------------
 # orient_normals_to_viewpoint
 # ---------------------------------------------------------------------------
+
 
 class TestOrientNormalsToViewpoint:
     """Tests for orient_normals_to_viewpoint."""

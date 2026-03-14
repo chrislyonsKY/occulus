@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from occulus.exceptions import OcculusRegistrationError, OcculusValidationError
+from occulus.exceptions import OcculusValidationError
 from occulus.normals import estimate_normals
 from occulus.registration.global_registration import (
     AlignmentResult,
@@ -15,10 +15,10 @@ from occulus.registration.global_registration import (
 )
 from occulus.types import PointCloud
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def flat_cloud_a() -> PointCloud:
@@ -41,6 +41,7 @@ def flat_cloud_b(flat_cloud_a) -> PointCloud:
 # ---------------------------------------------------------------------------
 # FPFH descriptors
 # ---------------------------------------------------------------------------
+
 
 class TestComputeFPFH:
     """Tests for compute_fpfh."""
@@ -79,6 +80,7 @@ class TestComputeFPFH:
 # RANSAC registration
 # ---------------------------------------------------------------------------
 
+
 class TestRansacRegistration:
     """Tests for ransac_registration."""
 
@@ -92,10 +94,14 @@ class TestRansacRegistration:
     def test_returns_registration_result(self, flat_cloud_a, flat_cloud_b):
         """ransac_registration returns a RegistrationResult."""
         from occulus.registration.icp import RegistrationResult
+
         feats_a = compute_fpfh(flat_cloud_a, radius=1.0)
         feats_b = compute_fpfh(flat_cloud_b, radius=1.0)
         result = ransac_registration(
-            flat_cloud_a, flat_cloud_b, feats_a, feats_b,
+            flat_cloud_a,
+            flat_cloud_b,
+            feats_a,
+            feats_b,
             max_correspondence_distance=0.5,
             max_iterations=1000,
         )
@@ -106,7 +112,10 @@ class TestRansacRegistration:
         feats_a = compute_fpfh(flat_cloud_a, radius=1.0)
         feats_b = compute_fpfh(flat_cloud_b, radius=1.0)
         result = ransac_registration(
-            flat_cloud_a, flat_cloud_b, feats_a, feats_b,
+            flat_cloud_a,
+            flat_cloud_b,
+            feats_a,
+            feats_b,
             max_correspondence_distance=0.5,
             max_iterations=500,
         )
@@ -117,7 +126,10 @@ class TestRansacRegistration:
         feats_a = compute_fpfh(flat_cloud_a, radius=1.0)
         feats_b = compute_fpfh(flat_cloud_b, radius=1.0)
         result = ransac_registration(
-            flat_cloud_a, flat_cloud_b, feats_a, feats_b,
+            flat_cloud_a,
+            flat_cloud_b,
+            feats_a,
+            feats_b,
             max_correspondence_distance=1.0,
             max_iterations=500,
         )
@@ -128,12 +140,14 @@ class TestRansacRegistration:
 # AlignmentResult
 # ---------------------------------------------------------------------------
 
+
 class TestAlignmentResult:
     """Tests for AlignmentResult dataclass."""
 
     def test_global_rmse_computed(self):
         """AlignmentResult computes global_rmse from pairwise results."""
         from occulus.registration.icp import RegistrationResult
+
         r1 = RegistrationResult(
             transformation=np.eye(4), fitness=0.9, inlier_rmse=0.05, converged=True
         )
@@ -155,6 +169,7 @@ class TestAlignmentResult:
 # ---------------------------------------------------------------------------
 # _svd_rigid_3pt helper
 # ---------------------------------------------------------------------------
+
 
 class TestSvdRigid3pt:
     """Tests for the _svd_rigid_3pt internal helper."""

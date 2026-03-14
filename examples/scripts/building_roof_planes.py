@@ -126,20 +126,25 @@ def main() -> None:
         areas = [p.area for p in planes if hasattr(p, "area")]
         if areas:
             areas_arr = np.array(areas)
-            print(f"\n  Plane area (m²):")
-            print(f"    Min / Max / Mean : {areas_arr.min():.1f} / {areas_arr.max():.1f} / {areas_arr.mean():.1f}")
+            print("\n  Plane area (m²):")
+            print(
+                f"    Min / Max / Mean : {areas_arr.min():.1f} / {areas_arr.max():.1f} / {areas_arr.mean():.1f}"
+            )
 
-        print(f"\n  Top 5 planes by inlier count:")
+        print("\n  Top 5 planes by inlier count:")
         sorted_planes = sorted(planes, key=lambda p: p.n_inliers, reverse=True)
         for i, plane in enumerate(sorted_planes[:5]):
             n = plane.normal
             tilt = float(np.degrees(np.arccos(np.clip(abs(n[2]), 0, 1))))
-            print(f"    Plane {i+1}: {plane.n_inliers:,} pts  "
-                  f"normal=({n[0]:.2f},{n[1]:.2f},{n[2]:.2f})  tilt={tilt:.1f}°")
+            print(
+                f"    Plane {i + 1}: {plane.n_inliers:,} pts  "
+                f"normal=({n[0]:.2f},{n[1]:.2f},{n[2]:.2f})  tilt={tilt:.1f}°"
+            )
 
         # Identify flat vs pitched roofs (tilt threshold 10°)
-        flat = sum(1 for p in planes
-                   if float(np.degrees(np.arccos(np.clip(abs(p.normal[2]), 0, 1)))) < 10)
+        flat = sum(
+            1 for p in planes if float(np.degrees(np.arccos(np.clip(abs(p.normal[2]), 0, 1)))) < 10
+        )
         print(f"\n  Flat roofs (tilt < 10°) : {flat}")
         print(f"  Pitched roofs           : {len(planes) - flat}")
 
@@ -147,6 +152,7 @@ def main() -> None:
     if not args.no_viz:
         try:
             from occulus.viz import visualize
+
             logger.info("Opening Open3D viewer…")
             visualize(above_n, window_name="Building Roof Planes")
         except ImportError:

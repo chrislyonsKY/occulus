@@ -75,8 +75,7 @@ def main() -> None:
     """Run the ICP point-to-point demo."""
     parser = argparse.ArgumentParser(description="ICP point-to-point demo")
     parser.add_argument("--n-points", type=int, default=6000)
-    parser.add_argument("--noise", type=float, default=0.005,
-                        help="Gaussian noise std dev (m)")
+    parser.add_argument("--noise", type=float, default=0.005, help="Gaussian noise std dev (m)")
     parser.add_argument("--no-viz", action="store_true")
     args = parser.parse_args()
 
@@ -88,11 +87,13 @@ def main() -> None:
 
     # Ground-truth transform
     angle = np.radians(15.0)
-    R_gt = np.array([
-        [np.cos(angle), -np.sin(angle), 0.0],
-        [np.sin(angle),  np.cos(angle), 0.0],
-        [0.0,            0.0,           1.0],
-    ])
+    R_gt = np.array(
+        [
+            [np.cos(angle), -np.sin(angle), 0.0],
+            [np.sin(angle), np.cos(angle), 0.0],
+            [0.0, 0.0, 1.0],
+        ]
+    )
     t_gt = np.array([0.3, -0.2, 0.1])
 
     source_xyz = _make_bunny(args.n_points, rng)
@@ -106,7 +107,8 @@ def main() -> None:
     # -- ICP point-to-point ---------------------------------------------------
     logger.info("Running ICP point-to-point…")
     result = icp_point_to_point(
-        src, tgt,
+        src,
+        tgt,
         max_correspondence_distance=0.2,
         max_iterations=200,
     )
@@ -123,7 +125,7 @@ def main() -> None:
     T_gt[:3, :3] = R_gt
     T_gt[:3, 3] = t_gt
     T_err = result.transformation - T_gt
-    print(f"\n=== Ground-Truth Verification ===")
+    print("\n=== Ground-Truth Verification ===")
     print(f"  Transform error (Frobenius): {np.linalg.norm(T_err):.6f}")
     print(f"  Translation error          : {np.linalg.norm(T_err[:3, 3]):.6f} m")
 
@@ -131,6 +133,7 @@ def main() -> None:
     if not args.no_viz:
         try:
             from occulus.viz import visualize_registration
+
             logger.info("Opening Open3D viewer…")
             visualize_registration(src, tgt, result, window_name="ICP Point-to-Point")
         except ImportError:

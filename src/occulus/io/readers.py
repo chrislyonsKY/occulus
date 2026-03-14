@@ -67,9 +67,7 @@ def read(
         raise OcculusIOError(f"File not found: {path}")
 
     if subsample is not None and not (0.0 < subsample <= 1.0):
-        raise OcculusValidationError(
-            f"subsample must be in (0.0, 1.0], got {subsample}"
-        )
+        raise OcculusValidationError(f"subsample must be in (0.0, 1.0], got {subsample}")
 
     ext = path.suffix.lower()
     if ext not in _SUPPORTED_EXTENSIONS:
@@ -224,9 +222,7 @@ def _read_ply(
     try:
         import open3d as o3d
     except ImportError as exc:
-        raise ImportError(
-            "open3d is required for PLY support: pip install 'occulus[viz]'"
-        ) from exc
+        raise ImportError("open3d is required for PLY support: pip install 'occulus[viz]'") from exc
 
     try:
         pcd = o3d.io.read_point_cloud(str(path))
@@ -289,9 +285,7 @@ def _read_pcd(
     try:
         import open3d as o3d
     except ImportError as exc:
-        raise ImportError(
-            "open3d is required for PCD support: pip install 'occulus[viz]'"
-        ) from exc
+        raise ImportError("open3d is required for PCD support: pip install 'occulus[viz]'") from exc
 
     try:
         pcd = o3d.io.read_point_cloud(str(path))
@@ -363,21 +357,15 @@ def _read_xyz(
         try:
             data = np.loadtxt(str(path), comments="#", delimiter=",")
         except Exception as exc:
-            raise OcculusIOError(
-                f"Failed to parse text point cloud {path}: {exc}"
-            ) from exc
+            raise OcculusIOError(f"Failed to parse text point cloud {path}: {exc}") from exc
     except Exception as exc:
-        raise OcculusIOError(
-            f"Failed to read text point cloud {path}: {exc}"
-        ) from exc
+        raise OcculusIOError(f"Failed to read text point cloud {path}: {exc}") from exc
 
     if data.ndim == 1:
         data = data.reshape(1, -1)
 
     if data.shape[1] < 3:
-        raise OcculusIOError(
-            f"Expected at least 3 columns (X Y Z), got {data.shape[1]} in {path}"
-        )
+        raise OcculusIOError(f"Expected at least 3 columns (X Y Z), got {data.shape[1]} in {path}")
 
     xyz = data[:, :3].astype(np.float64)
     intensity: NDArray[np.float64] | None = None

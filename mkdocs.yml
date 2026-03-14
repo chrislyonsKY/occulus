@@ -25,10 +25,12 @@ theme:
     - navigation.sections
     - navigation.expand
     - navigation.top
+    - navigation.instant
     - search.suggest
     - search.highlight
     - content.code.copy
     - content.code.annotate
+    - content.tabs.link
   font:
     text: Inter
     code: JetBrains Mono
@@ -45,14 +47,15 @@ plugins:
             show_source: true
             show_root_heading: true
             heading_level: 2
-  # Uncomment if using Jupyter notebooks in docs/
-  # - mkdocs-jupyter:
-  #     execute: false
 
 markdown_extensions:
   - admonition
   - pymdownx.details
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.highlight:
       anchor_linenums: true
   - pymdownx.inlinehilite

@@ -28,11 +28,11 @@ from occulus.types import AcquisitionMetadata, PointCloud
 logger = logging.getLogger(__name__)
 
 __all__ = [
-    "voxel_downsample",
+    "crop",
+    "radius_outlier_removal",
     "random_downsample",
     "statistical_outlier_removal",
-    "radius_outlier_removal",
-    "crop",
+    "voxel_downsample",
 ]
 
 
@@ -73,9 +73,7 @@ def voxel_downsample(cloud: PointCloud, voxel_size: float) -> PointCloud:
     # Encode 3D voxel index as a single integer key for grouping
     max_idx = voxel_idx.max(axis=0) + 1
     flat = (
-        voxel_idx[:, 0] * (max_idx[1] * max_idx[2])
-        + voxel_idx[:, 1] * max_idx[2]
-        + voxel_idx[:, 2]
+        voxel_idx[:, 0] * (max_idx[1] * max_idx[2]) + voxel_idx[:, 1] * max_idx[2] + voxel_idx[:, 2]
     )
 
     sort_order = np.argsort(flat, kind="stable")
@@ -85,7 +83,9 @@ def voxel_downsample(cloud: PointCloud, voxel_size: float) -> PointCloud:
 
     logger.debug(
         "voxel_downsample: %d → %d points (voxel_size=%.4f)",
-        cloud.n_points, len(selected), voxel_size,
+        cloud.n_points,
+        len(selected),
+        voxel_size,
     )
     return _subset(cloud, selected)
 
@@ -181,7 +181,8 @@ def statistical_outlier_removal(
 
     logger.debug(
         "statistical_outlier_removal: removed %d/%d points",
-        (~inlier_mask).sum(), cloud.n_points,
+        (~inlier_mask).sum(),
+        cloud.n_points,
     )
     return _subset(cloud, np.where(inlier_mask)[0]), inlier_mask
 
@@ -229,7 +230,10 @@ def radius_outlier_removal(
 
     logger.debug(
         "radius_outlier_removal: removed %d/%d points (r=%.4f, min_nb=%d)",
-        (~inlier_mask).sum(), cloud.n_points, radius, min_neighbors,
+        (~inlier_mask).sum(),
+        cloud.n_points,
+        radius,
+        min_neighbors,
     )
     return _subset(cloud, np.where(inlier_mask)[0]), inlier_mask
 
@@ -270,14 +274,19 @@ def crop(
 
     xyz = cloud.xyz
     mask: NDArray[np.bool_] = (
-        (xyz[:, 0] >= xmin) & (xyz[:, 0] <= xmax)
-        & (xyz[:, 1] >= ymin) & (xyz[:, 1] <= ymax)
-        & (xyz[:, 2] >= zmin) & (xyz[:, 2] <= zmax)
+        (xyz[:, 0] >= xmin)
+        & (xyz[:, 0] <= xmax)
+        & (xyz[:, 1] >= ymin)
+        & (xyz[:, 1] <= ymax)
+        & (xyz[:, 2] >= zmin)
+        & (xyz[:, 2] <= zmax)
     )
 
     logger.debug(
         "crop: %d → %d points inside bbox %s",
-        cloud.n_points, int(mask.sum()), bbox,
+        cloud.n_points,
+        int(mask.sum()),
+        bbox,
     )
     return _subset(cloud, np.where(mask)[0])
 
@@ -304,6 +313,7 @@ def _subset(cloud: PointCloud, indices: NDArray[np.intp]) -> PointCloud:
     PointCloud
         Subset cloud of the same concrete type as the input.
     """
+
     def _sel(arr: NDArray | None) -> NDArray | None:  # type: ignore[type-arg]
         return arr[indices] if arr is not None else None
 

@@ -26,10 +26,10 @@ logger = logging.getLogger(__name__)
 __all__ = [
     "CloudStatistics",
     "CoverageStatistics",
-    "compute_cloud_statistics",
-    "point_density",
     "canopy_height_model",
+    "compute_cloud_statistics",
     "coverage_statistics",
+    "point_density",
 ]
 
 
@@ -193,7 +193,9 @@ def point_density(
 
     logger.debug(
         "point_density: raster %dx%d (res=%.3f), %.1f pts/cell avg",
-        density.shape[1], density.shape[0], resolution,
+        density.shape[1],
+        density.shape[0],
+        resolution,
         density[density > 0].mean() if density.any() else 0,
     )
     return density, x_edges, y_edges
@@ -259,8 +261,7 @@ def canopy_height_model(
     ground_mask = cls == ground_class
     if not ground_mask.any():
         raise OcculusValidationError(
-            f"No ground points found (class {ground_class}). "
-            "Run ground classification first."
+            f"No ground points found (class {ground_class}). Run ground classification first."
         )
 
     ground_xyz = xyz[ground_mask]
@@ -290,6 +291,7 @@ def canopy_height_model(
     valid_mask = np.isfinite(ground_surface)
     if valid_mask.sum() > 0 and (~valid_mask).sum() > 0:
         from scipy.spatial import KDTree  # type: ignore[import-untyped]
+
         rows, cols = np.where(valid_mask)
         valid_pts = np.column_stack((rows, cols))
         nv_rows, nv_cols = np.where(~valid_mask)
@@ -316,7 +318,10 @@ def canopy_height_model(
 
     logger.info(
         "canopy_height_model: %dx%d raster, max_height=%.2f, res=%.2f",
-        nx, ny, float(chm.max()), resolution,
+        nx,
+        ny,
+        float(chm.max()),
+        resolution,
     )
     return chm, x_edges, y_edges
 
@@ -344,9 +349,9 @@ def coverage_statistics(
     OcculusValidationError
         If ``resolution`` is not positive or the cloud is empty.
     """
-    density, x_edges, y_edges = point_density(cloud, resolution)
+    density, _x_edges, _y_edges = point_density(cloud, resolution)
 
-    cell_area = resolution ** 2
+    cell_area = resolution**2
     total_cells = density.size
     covered_cells = int((density > 0).sum())
     gap_fraction = 1.0 - covered_cells / total_cells if total_cells > 0 else 1.0

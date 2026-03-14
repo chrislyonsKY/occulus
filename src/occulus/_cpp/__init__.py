@@ -29,14 +29,15 @@ _CPP_AVAILABLE = False
 
 try:
     from occulus._cpp._core import (  # type: ignore[import-not-found]
+        features,
+        filters,
         kdtree,
+        mesh,
+        normals,
         registration,
         segmentation,
-        mesh,
-        features,
-        normals,
-        filters,
     )
+
     _CPP_AVAILABLE = True
 except ImportError:
     logger.debug("C++ backend not available — using pure-Python fallbacks")

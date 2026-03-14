@@ -77,11 +77,10 @@ def main() -> None:
     # -- Canopy height model --------------------------------------------------
     logger.info("Building canopy height model (resolution=%.1f m)…", args.chm_resolution)
     if isinstance(classified, AerialCloud):
-        chm, x_edges, y_edges = canopy_height_model(
-            classified, resolution=args.chm_resolution
-        )
+        chm, x_edges, y_edges = canopy_height_model(classified, resolution=args.chm_resolution)
         print("\n=== Canopy Height Model ===")
         import numpy as np
+
         valid = chm[~np.isnan(chm)]
         if valid.size > 0:
             print(f"  CHM shape     : {chm.shape[0]} × {chm.shape[1]} cells")
@@ -116,10 +115,10 @@ def main() -> None:
     if not args.no_viz and seg is not None:
         try:
             from occulus.viz import visualize_segments
+
             logger.info("Opening Open3D viewer (%d trees)…", seg.n_segments)
             visualize_segments(
-                classified, seg.labels,
-                window_name=f"Kentucky Forest — {seg.n_segments} trees"
+                classified, seg.labels, window_name=f"Kentucky Forest — {seg.n_segments} trees"
             )
         except ImportError:
             logger.warning("open3d not installed — skipping visualization.")
@@ -128,30 +127,38 @@ def main() -> None:
     try:
         import matplotlib.pyplot as plt
         from _plot_style import CMAP_CANOPY, apply_report_style, save_figure
+
         apply_report_style()
         if isinstance(classified, AerialCloud):
-            chm, x_edges, y_edges = canopy_height_model(
-                classified, resolution=args.chm_resolution
-            )
+            chm, x_edges, y_edges = canopy_height_model(classified, resolution=args.chm_resolution)
             fig, ax = plt.subplots(figsize=(10, 8))
             im = ax.imshow(
-                chm, origin="lower",
+                chm,
+                origin="lower",
                 extent=[x_edges[0], x_edges[-1], y_edges[0], y_edges[-1]],
                 cmap=CMAP_CANOPY,
             )
             plt.colorbar(im, ax=ax, label="Height (m)")
-            ax.set_title("Canopy Height Model — Eastern Kentucky\n"
-                         f"Resolution: {args.chm_resolution} m  |  "
-                         f"Max height: {valid.max():.1f} m" if valid.size else "")
+            ax.set_title(
+                "Canopy Height Model — Eastern Kentucky\n"
+                f"Resolution: {args.chm_resolution} m  |  "
+                f"Max height: {valid.max():.1f} m"
+                if valid.size
+                else ""
+            )
             ax.set_xlabel("Easting (m)")
             ax.set_ylabel("Northing (m)")
             _out_dir = Path(__file__).parent.parent / "outputs"
             _out_dir.mkdir(parents=True, exist_ok=True)
             out_png = _out_dir / "canopy_height_model.png"
-            save_figure(fig, out_png, alt_text=(
-                "Canopy height model raster for eastern Kentucky showing tree heights "
-                "up to 30+ meters in the Daniel Boone National Forest region."
-            ))
+            save_figure(
+                fig,
+                out_png,
+                alt_text=(
+                    "Canopy height model raster for eastern Kentucky showing tree heights "
+                    "up to 30+ meters in the Daniel Boone National Forest region."
+                ),
+            )
             logger.info("CHM saved to %s", out_png)
             plt.close()
     except ImportError:

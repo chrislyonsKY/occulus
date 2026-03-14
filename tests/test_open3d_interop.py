@@ -11,13 +11,13 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 import pytest
 
-from occulus.exceptions import OcculusMeshError, OcculusValidationError
-from occulus.types import AcquisitionMetadata, PointCloud
-
+from occulus.exceptions import OcculusValidationError
+from occulus.types import PointCloud
 
 # ---------------------------------------------------------------------------
 # to_open3d
 # ---------------------------------------------------------------------------
+
 
 class TestToOpen3D:
     """Tests for PointCloud.to_open3d()."""
@@ -82,6 +82,7 @@ class TestToOpen3D:
 # from_open3d
 # ---------------------------------------------------------------------------
 
+
 class TestFromOpen3D:
     """Tests for PointCloud.from_open3d()."""
 
@@ -123,12 +124,14 @@ class TestFromOpen3D:
 # Mesh (mocked open3d)
 # ---------------------------------------------------------------------------
 
+
 class TestMeshResultToOpen3D:
     """Tests for MeshResult.to_open3d()."""
 
     def test_raises_import_error_without_open3d(self):
         """MeshResult.to_open3d raises ImportError if open3d is not installed."""
         from occulus.mesh import MeshResult
+
         mesh = MeshResult(
             vertices=np.zeros((3, 3)),
             faces=np.zeros((1, 3), dtype=np.int32),
@@ -151,7 +154,7 @@ class TestMeshResultToOpen3D:
         )
 
         with patch.dict("sys.modules", {"open3d": mock_o3d}):
-            result = mesh.to_open3d()
+            mesh.to_open3d()
 
         mock_o3d.geometry.TriangleMesh.assert_called_once()
         mock_o3d.utility.Vector3dVector.assert_called()
@@ -160,6 +163,7 @@ class TestMeshResultToOpen3D:
     def test_n_vertices_and_faces(self):
         """MeshResult properties return correct counts."""
         from occulus.mesh import MeshResult
+
         mesh = MeshResult(
             vertices=np.zeros((10, 3)),
             faces=np.zeros((5, 3), dtype=np.int32),
@@ -170,6 +174,7 @@ class TestMeshResultToOpen3D:
     def test_poisson_raises_without_normals(self):
         """poisson_mesh raises OcculusValidationError when cloud has no normals."""
         from occulus.mesh import poisson_mesh
+
         cloud = PointCloud(np.random.default_rng(0).random((100, 3)))
         with pytest.raises(OcculusValidationError, match="normals"):
             poisson_mesh(cloud)
@@ -177,6 +182,7 @@ class TestMeshResultToOpen3D:
     def test_bpa_raises_without_normals(self):
         """ball_pivoting_mesh raises OcculusValidationError when cloud has no normals."""
         from occulus.mesh import ball_pivoting_mesh
+
         cloud = PointCloud(np.random.default_rng(0).random((100, 3)))
         with pytest.raises(OcculusValidationError, match="normals"):
             ball_pivoting_mesh(cloud)
@@ -185,6 +191,7 @@ class TestMeshResultToOpen3D:
         """poisson_mesh raises ImportError if open3d not installed."""
         from occulus.mesh import poisson_mesh
         from occulus.normals import estimate_normals
+
         cloud = estimate_normals(PointCloud(np.random.default_rng(0).random((100, 3))))
         with patch.dict("sys.modules", {"open3d": None}):
             with pytest.raises(ImportError, match="open3d"):
@@ -235,9 +242,7 @@ class TestMeshResultToOpen3D:
 
         mock_o3d = MagicMock()
         mock_o3d.geometry.TriangleMesh = FakeTM
-        FakeTM.create_from_point_cloud_ball_pivoting = staticmethod(
-            lambda pcd, radii: mock_mesh
-        )
+        FakeTM.create_from_point_cloud_ball_pivoting = staticmethod(lambda pcd, radii: mock_mesh)
 
         with patch.dict("sys.modules", {"open3d": mock_o3d}):
             with patch("occulus.types.PointCloud.to_open3d", return_value=MagicMock()):
@@ -251,12 +256,14 @@ class TestMeshResultToOpen3D:
 # Viz (mocked open3d)
 # ---------------------------------------------------------------------------
 
+
 class TestVizFunctions:
     """Tests for occulus.viz functions with mocked open3d."""
 
     def test_visualize_raises_without_open3d(self):
         """visualize raises ImportError if open3d not installed."""
         from occulus.viz import visualize
+
         cloud = PointCloud(np.random.default_rng(0).random((10, 3)))
         with patch.dict("sys.modules", {"open3d": None}):
             with pytest.raises(ImportError, match="open3d"):
@@ -265,6 +272,7 @@ class TestVizFunctions:
     def test_visualize_raises_no_clouds(self):
         """visualize raises ValueError when called with no clouds."""
         from occulus.viz import visualize
+
         with pytest.raises(ValueError, match="at least one"):
             visualize()
 
@@ -288,6 +296,7 @@ class TestVizFunctions:
         """visualize_registration raises ImportError if open3d not installed."""
         from occulus.registration.icp import RegistrationResult
         from occulus.viz import visualize_registration
+
         cloud = PointCloud(np.random.default_rng(0).random((10, 3)))
         result = RegistrationResult(
             transformation=np.eye(4), fitness=1.0, inlier_rmse=0.0, converged=True
@@ -299,6 +308,7 @@ class TestVizFunctions:
     def test_visualize_segments_label_length_mismatch_raises(self):
         """visualize_segments raises ValueError for wrong-length labels."""
         from occulus.viz import visualize_segments
+
         cloud = PointCloud(np.random.default_rng(0).random((10, 3)))
         with pytest.raises(ValueError, match="labels length"):
             visualize_segments(cloud, np.zeros(5, dtype=np.int32))
@@ -306,6 +316,7 @@ class TestVizFunctions:
     def test_visualize_segments_raises_without_open3d(self):
         """visualize_segments raises ImportError if open3d not installed."""
         from occulus.viz import visualize_segments
+
         cloud = PointCloud(np.random.default_rng(0).random((10, 3)))
         labels = np.zeros(10, dtype=np.int32)
         with patch.dict("sys.modules", {"open3d": None}):
@@ -315,6 +326,7 @@ class TestVizFunctions:
     def test_visualize_segments_calls_draw(self):
         """visualize_segments calls draw_geometries with coloured cloud."""
         from occulus.viz import visualize_segments
+
         cloud = PointCloud(np.random.default_rng(0).random((30, 3)))
         labels = np.array([0] * 10 + [1] * 10 + [-1] * 10, dtype=np.int32)
 

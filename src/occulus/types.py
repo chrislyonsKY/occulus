@@ -166,9 +166,7 @@ class PointCloud:
         metadata: AcquisitionMetadata | None = None,
     ) -> None:
         if xyz.ndim != 2 or xyz.shape[1] != 3:
-            raise OcculusValidationError(
-                f"xyz must be (N, 3) array, got shape {xyz.shape}"
-            )
+            raise OcculusValidationError(f"xyz must be (N, 3) array, got shape {xyz.shape}")
 
         n = xyz.shape[0]
         self.xyz = np.ascontiguousarray(xyz, dtype=np.float64)
@@ -182,13 +180,9 @@ class PointCloud:
                     f"{name} length {arr.shape[0]} does not match n_points={n}"
                 )
             if arr.ndim != expected_ndim:
-                raise OcculusValidationError(
-                    f"{name} must be {expected_ndim}D, got {arr.ndim}D"
-                )
+                raise OcculusValidationError(f"{name} must be {expected_ndim}D, got {arr.ndim}D")
             if col is not None and arr.shape[1] != col:
-                raise OcculusValidationError(
-                    f"{name} must have {col} columns, got {arr.shape[1]}"
-                )
+                raise OcculusValidationError(f"{name} must have {col} columns, got {arr.shape[1]}")
 
         _check(intensity, "intensity", 1, None)
         _check(classification, "classification", 1, None)
@@ -260,9 +254,7 @@ class PointCloud:
         pcd.points = o3d.utility.Vector3dVector(np.ascontiguousarray(self.xyz))
 
         if self.normals is not None:
-            pcd.normals = o3d.utility.Vector3dVector(
-                np.ascontiguousarray(self.normals)
-            )
+            pcd.normals = o3d.utility.Vector3dVector(np.ascontiguousarray(self.normals))
         if self.rgb is not None:
             pcd.colors = o3d.utility.Vector3dVector(
                 np.ascontiguousarray(self.rgb.astype(np.float64) / 255.0)
@@ -302,9 +294,7 @@ class PointCloud:
             ) from exc
 
         if not isinstance(pcd, o3d.geometry.PointCloud):
-            raise OcculusValidationError(
-                f"Expected open3d.geometry.PointCloud, got {type(pcd)}"
-            )
+            raise OcculusValidationError(f"Expected open3d.geometry.PointCloud, got {type(pcd)}")
 
         xyz = np.asarray(pcd.points, dtype=np.float64)
         if xyz.shape[0] == 0:
@@ -409,7 +399,9 @@ class AerialCloud(PointCloud):
             rgb=self.rgb[mask] if self.rgb is not None else None,
             normals=self.normals[mask] if self.normals is not None else None,
             return_number=self.return_number[mask],
-            number_of_returns=self.number_of_returns[mask] if self.number_of_returns is not None else None,
+            number_of_returns=self.number_of_returns[mask]
+            if self.number_of_returns is not None
+            else None,
             metadata=self.metadata,
         )
 
@@ -506,7 +498,9 @@ class TerrestrialCloud(PointCloud):
 
         logger.debug(
             "viewpoint_mask: %d/%d points visible from scan position %s",
-            mask.sum(), self.n_points, pos.scan_id or scan_index,
+            mask.sum(),
+            self.n_points,
+            pos.scan_id or scan_index,
         )
         return mask
 

@@ -70,10 +70,15 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Occulus karst topography demo")
     parser.add_argument("--input", type=Path, default=None)
     parser.add_argument("--subsample", type=float, default=0.3)
-    parser.add_argument("--resolution", type=float, default=1.0,
-                        help="Grid resolution in metres (default 1.0)")
-    parser.add_argument("--min-depth", type=float, default=0.5,
-                        help="Minimum depth below surroundings to flag as sinkhole (m)")
+    parser.add_argument(
+        "--resolution", type=float, default=1.0, help="Grid resolution in metres (default 1.0)"
+    )
+    parser.add_argument(
+        "--min-depth",
+        type=float,
+        default=0.5,
+        help="Minimum depth below surroundings to flag as sinkhole (m)",
+    )
     parser.add_argument("--no-viz", action="store_true")
     args = parser.parse_args()
 
@@ -103,7 +108,7 @@ def main() -> None:
 
     # -- CHM (terrain surface proxy) -----------------------------------------
     logger.info("Building terrain surface (resolution=%.1f m)…", args.resolution)
-    chm, x_edges, y_edges = canopy_height_model(classified, resolution=args.resolution)
+    chm, _x_edges, _y_edges = canopy_height_model(classified, resolution=args.resolution)
 
     valid = ~np.isnan(chm)
     filled = chm.copy()
@@ -112,7 +117,7 @@ def main() -> None:
 
     # -- Sinkhole detection via local minima ----------------------------------
     try:
-        from scipy.ndimage import minimum_filter, label
+        from scipy.ndimage import label, minimum_filter
 
         logger.info("Detecting local minima (candidate sinkholes)…")
         # A cell is a local minimum if it equals the minimum in a 5x5 window
@@ -121,6 +126,7 @@ def main() -> None:
 
         # Filter by depth: local min must be >= min_depth below mean of 5x5 neighbourhood
         from scipy.ndimage import uniform_filter
+
         local_mean = uniform_filter(filled, size=5, mode="reflect")
         depth = local_mean - filled
         sinkhole_mask = local_min_mask & (depth >= args.min_depth)
@@ -134,7 +140,7 @@ def main() -> None:
         print(f"  Candidate sinkholes (depth >= {args.min_depth} m): {n_candidates}")
         if depths:
             print(f"  Max candidate depth : {max(depths):.2f} m")
-            print(f"  Mean candidate depth: {sum(depths)/len(depths):.2f} m")
+            print(f"  Mean candidate depth: {sum(depths) / len(depths):.2f} m")
     except ImportError:
         logger.warning("scipy not installed — skipping local minima detection.")
         print("\nInstall scipy to enable sinkhole detection: pip install scipy")
@@ -143,6 +149,7 @@ def main() -> None:
     if not args.no_viz:
         try:
             from occulus.viz import visualize
+
             logger.info("Opening Open3D viewer…")
             visualize(classified, window_name="Karst Topography — Eastern KY")
         except ImportError:

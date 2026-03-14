@@ -63,13 +63,12 @@ def process_tile(path: Path, voxel_size: float, subsample: float) -> dict:
         cloud = read(path, platform="aerial", subsample=subsample)
         row["n_raw"] = cloud.n_points
 
-        clean = statistical_outlier_removal(cloud, nb_neighbors=16, std_ratio=2.5)
+        clean, _mask = statistical_outlier_removal(cloud, nb_neighbors=16, std_ratio=2.5)
         ds = voxel_downsample(clean, voxel_size=voxel_size)
         row["n_downsampled"] = ds.n_points
 
         classified = classify_ground_csf(ds)
         if isinstance(classified, AerialCloud) and classified.classification is not None:
-            import numpy as np
             n_g = int((classified.classification == 2).sum())
             row["n_ground"] = n_g
             row["pct_ground"] = round(n_g / ds.n_points * 100, 1)
@@ -133,9 +132,10 @@ def main() -> None:
     if success > 1:
         try:
             import matplotlib.pyplot as plt
+
             names = [r["file"][:20] for r in rows if not r.get("error")]
             counts = [r.get("n_raw", 0) for r in rows if not r.get("error")]
-            fig, ax = plt.subplots(figsize=(max(8, len(names)), 4))
+            _fig, ax = plt.subplots(figsize=(max(8, len(names)), 4))
             ax.bar(range(len(names)), counts, color="steelblue")
             ax.set_xticks(range(len(names)))
             ax.set_xticklabels(names, rotation=45, ha="right", fontsize=8)

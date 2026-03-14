@@ -27,12 +27,12 @@ from occulus.types import PointCloud
 logger = logging.getLogger(__name__)
 
 __all__ = [
-    "PlaneResult",
     "CylinderResult",
     "GeometricFeatures",
-    "detect_planes",
-    "detect_cylinders",
+    "PlaneResult",
     "compute_geometric_features",
+    "detect_cylinders",
+    "detect_planes",
 ]
 
 
@@ -233,19 +233,24 @@ def detect_planes(
         full_inlier_mask = np.zeros(cloud.n_points, dtype=bool)
         full_inlier_mask[remaining_indices[final_inlier_local]] = True
 
-        planes.append(PlaneResult(
-            equation=final_eq,
-            normal=normal_fit,
-            inlier_mask=full_inlier_mask,
-            n_inliers=int(final_inlier_local.sum()),
-            rmse=rmse,
-        ))
+        planes.append(
+            PlaneResult(
+                equation=final_eq,
+                normal=normal_fit,
+                inlier_mask=full_inlier_mask,
+                n_inliers=int(final_inlier_local.sum()),
+                rmse=rmse,
+            )
+        )
 
         # Remove inliers from remaining points
         remaining_mask[remaining_indices[final_inlier_local]] = False
         logger.debug(
             "detect_planes: found plane %d (%d inliers, rmse=%.4f), %d remaining",
-            len(planes), int(final_inlier_local.sum()), rmse, remaining_mask.sum(),
+            len(planes),
+            int(final_inlier_local.sum()),
+            rmse,
+            remaining_mask.sum(),
         )
 
     logger.info("detect_planes: found %d planes", len(planes))

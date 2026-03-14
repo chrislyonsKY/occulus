@@ -14,7 +14,7 @@ The dispatcher :func:`icp` selects the best variant automatically.
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 import numpy as np
 from numpy.typing import NDArray
@@ -108,13 +108,9 @@ def icp(
     """
     valid_methods = {"auto", "point_to_point", "point_to_plane"}
     if method not in valid_methods:
-        raise OcculusValidationError(
-            f"method must be one of {valid_methods}, got '{method}'"
-        )
+        raise OcculusValidationError(f"method must be one of {valid_methods}, got '{method}'")
 
-    use_p2plane = (method == "point_to_plane") or (
-        method == "auto" and target.has_normals
-    )
+    use_p2plane = (method == "point_to_plane") or (method == "auto" and target.has_normals)
 
     if use_p2plane and not target.has_normals:
         raise OcculusValidationError(
@@ -124,7 +120,8 @@ def icp(
 
     if use_p2plane:
         return icp_point_to_plane(
-            source, target,
+            source,
+            target,
             max_correspondence_distance=max_correspondence_distance,
             max_iterations=max_iterations,
             tolerance=tolerance,
@@ -132,7 +129,8 @@ def icp(
         )
     else:
         return icp_point_to_point(
-            source, target,
+            source,
+            target,
             max_correspondence_distance=max_correspondence_distance,
             max_iterations=max_iterations,
             tolerance=tolerance,
@@ -222,7 +220,10 @@ def icp_point_to_point(
     fitness, rmse = _compute_metrics(src_xyz, target.xyz, max_correspondence_distance)
     logger.info(
         "ICP p2p: fitness=%.3f rmse=%.4f converged=%s iter=%d",
-        fitness, rmse, converged, iteration + 1,
+        fitness,
+        rmse,
+        converged,
+        iteration + 1,
     )
     return RegistrationResult(
         transformation=transform,
@@ -332,7 +333,10 @@ def icp_point_to_plane(
     fitness, rmse = _compute_metrics(src_xyz, target.xyz, max_correspondence_distance)
     logger.info(
         "ICP p2plane: fitness=%.3f rmse=%.4f converged=%s iter=%d",
-        fitness, rmse, converged, iteration + 1,
+        fitness,
+        rmse,
+        converged,
+        iteration + 1,
     )
     return RegistrationResult(
         transformation=transform,
@@ -370,9 +374,7 @@ def _init_transform(init: NDArray[np.float64] | None) -> NDArray[np.float64]:
         return np.eye(4, dtype=np.float64)
     arr = np.asarray(init, dtype=np.float64)
     if arr.shape != (4, 4):
-        raise OcculusValidationError(
-            f"init_transform must be a (4, 4) array, got {arr.shape}"
-        )
+        raise OcculusValidationError(f"init_transform must be a (4, 4) array, got {arr.shape}")
     return arr.copy()
 
 
@@ -460,12 +462,16 @@ def _build_p2plane_system(
     sx, sy, sz = src[:, 0], src[:, 1], src[:, 2]
 
     # Cross products for rotation columns
-    A = np.column_stack([
-        nz * sy - ny * sz,
-        nx * sz - nz * sx,
-        ny * sx - nx * sy,
-        nx, ny, nz,
-    ])
+    A = np.column_stack(
+        [
+            nz * sy - ny * sz,
+            nx * sz - nz * sx,
+            ny * sx - nx * sy,
+            nx,
+            ny,
+            nz,
+        ]
+    )
     b = np.einsum("ij,ij->i", tgt - src, nrm)
     return A, b
 
@@ -487,11 +493,13 @@ def _rodrigues_to_matrix(rvec: NDArray[np.float64]) -> NDArray[np.float64]:
     if angle < 1e-12:
         return np.eye(3)
     axis = rvec / angle
-    K = np.array([
-        [0, -axis[2], axis[1]],
-        [axis[2], 0, -axis[0]],
-        [-axis[1], axis[0], 0],
-    ])
+    K = np.array(
+        [
+            [0, -axis[2], axis[1]],
+            [axis[2], 0, -axis[0]],
+            [-axis[1], axis[0], 0],
+        ]
+    )
     return np.eye(3) + np.sin(angle) * K + (1 - np.cos(angle)) * (K @ K)
 
 

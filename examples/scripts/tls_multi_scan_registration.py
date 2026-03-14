@@ -77,21 +77,23 @@ def _rigid_transform(xyz: np.ndarray, angle_deg: float, translation: np.ndarray)
         (N, 3) transformed points.
     """
     a = np.radians(angle_deg)
-    R = np.array([
-        [np.cos(a), -np.sin(a), 0.0],
-        [np.sin(a),  np.cos(a), 0.0],
-        [0.0,        0.0,       1.0],
-    ])
+    R = np.array(
+        [
+            [np.cos(a), -np.sin(a), 0.0],
+            [np.sin(a), np.cos(a), 0.0],
+            [0.0, 0.0, 1.0],
+        ]
+    )
     return (R @ xyz.T).T + translation
 
 
 def main() -> None:
     """Run the TLS multi-scan registration demo."""
     parser = argparse.ArgumentParser(description="TLS multi-scan registration demo")
-    parser.add_argument("--n-points", type=int, default=4000,
-                        help="Points per scan (default 4000)")
-    parser.add_argument("--voxel-size", type=float, default=0.1,
-                        help="Voxel size for downsampling (m)")
+    parser.add_argument("--n-points", type=int, default=4000, help="Points per scan (default 4000)")
+    parser.add_argument(
+        "--voxel-size", type=float, default=0.1, help="Voxel size for downsampling (m)"
+    )
     parser.add_argument("--no-viz", action="store_true")
     args = parser.parse_args()
 
@@ -105,9 +107,9 @@ def main() -> None:
 
     # Three scans at different orientations / offsets
     configs = [
-        (0.0,  np.array([0.0,  0.0, 0.0])),
+        (0.0, np.array([0.0, 0.0, 0.0])),
         (15.0, np.array([0.5, -0.3, 0.0])),
-        (30.0, np.array([1.0,  0.5, 0.0])),
+        (30.0, np.array([1.0, 0.5, 0.0])),
     ]
 
     clouds: list[PointCloud] = []
@@ -135,6 +137,7 @@ def main() -> None:
     if not args.no_viz:
         try:
             from occulus.viz import visualize
+
             logger.info("Opening Open3D viewer…")
             visualize(*clouds, window_name="TLS Multi-Scan Registration")
         except ImportError:

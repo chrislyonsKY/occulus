@@ -30,16 +30,16 @@ from occulus.types import (
 )
 
 __all__ = [
+    "AcquisitionMetadata",
+    "AerialCloud",
+    "Platform",
+    # Types
+    "PointCloud",
+    "ScanPosition",
+    "TerrestrialCloud",
+    "UAVCloud",
     "__version__",
     # I/O
     "read",
     "write",
-    # Types
-    "PointCloud",
-    "AerialCloud",
-    "TerrestrialCloud",
-    "UAVCloud",
-    "Platform",
-    "ScanPosition",
-    "AcquisitionMetadata",
 ]

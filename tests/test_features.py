@@ -15,10 +15,10 @@ from occulus.features import (
 )
 from occulus.types import PointCloud
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def planar_cloud() -> PointCloud:
@@ -51,6 +51,7 @@ def volumetric_cloud() -> PointCloud:
 # ---------------------------------------------------------------------------
 # detect_planes
 # ---------------------------------------------------------------------------
+
 
 class TestDetectPlanes:
     """Tests for detect_planes."""
@@ -112,6 +113,7 @@ class TestDetectPlanes:
 # detect_cylinders
 # ---------------------------------------------------------------------------
 
+
 class TestDetectCylinders:
     """Tests for detect_cylinders."""
 
@@ -135,6 +137,7 @@ class TestDetectCylinders:
 # ---------------------------------------------------------------------------
 # compute_geometric_features
 # ---------------------------------------------------------------------------
+
 
 class TestComputeGeometricFeatures:
     """Tests for compute_geometric_features."""

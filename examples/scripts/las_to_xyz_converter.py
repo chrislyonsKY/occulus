@@ -17,7 +17,6 @@ from __future__ import annotations
 
 import argparse
 import logging
-import sys
 from pathlib import Path
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
@@ -62,15 +61,18 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Convert LAS/LAZ to XYZ or CSV")
     parser.add_argument("inputs", nargs="+", type=Path, help="Input LAS/LAZ files")
     parser.add_argument(
-        "--format", choices=["xyz", "csv"], default="xyz",
+        "--format",
+        choices=["xyz", "csv"],
+        default="xyz",
         help="Output format (default: xyz)",
     )
     parser.add_argument(
-        "--output-dir", type=Path, default=None,
+        "--output-dir",
+        type=Path,
+        default=None,
         help="Output directory (default: same as input)",
     )
-    parser.add_argument("--subsample", type=float, default=None,
-                        help="Subsample fraction (0–1)")
+    parser.add_argument("--subsample", type=float, default=None, help="Subsample fraction (0–1)")
     args = parser.parse_args()
 
     converted = []

@@ -15,10 +15,10 @@ from occulus.filters import (
 )
 from occulus.types import AerialCloud, PointCloud
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def dense_cloud() -> PointCloud:
@@ -41,6 +41,7 @@ def cloud_with_outliers() -> PointCloud:
 # ---------------------------------------------------------------------------
 # voxel_downsample
 # ---------------------------------------------------------------------------
+
 
 class TestVoxelDownsample:
     """Tests for voxel_downsample."""
@@ -90,6 +91,7 @@ class TestVoxelDownsample:
 # random_downsample
 # ---------------------------------------------------------------------------
 
+
 class TestRandomDownsample:
     """Tests for random_downsample."""
 
@@ -116,12 +118,13 @@ class TestRandomDownsample:
 # statistical_outlier_removal
 # ---------------------------------------------------------------------------
 
+
 class TestStatisticalOutlierRemoval:
     """Tests for statistical_outlier_removal."""
 
     def test_removes_outliers(self, cloud_with_outliers):
         """SOR removes the cluster of distant outliers."""
-        result, mask = statistical_outlier_removal(cloud_with_outliers, nb_neighbors=10)
+        result, _mask = statistical_outlier_removal(cloud_with_outliers, nb_neighbors=10)
         assert result.n_points < cloud_with_outliers.n_points
         assert result.n_points > 400  # normal cluster should survive
 
@@ -147,12 +150,13 @@ class TestStatisticalOutlierRemoval:
 # radius_outlier_removal
 # ---------------------------------------------------------------------------
 
+
 class TestRadiusOutlierRemoval:
     """Tests for radius_outlier_removal."""
 
     def test_removes_isolated_points(self, cloud_with_outliers):
         """Radius filter removes isolated distant points."""
-        result, mask = radius_outlier_removal(cloud_with_outliers, radius=1.0, min_neighbors=5)
+        result, _mask = radius_outlier_removal(cloud_with_outliers, radius=1.0, min_neighbors=5)
         assert result.n_points < cloud_with_outliers.n_points
 
     def test_returns_inlier_mask(self, cloud_with_outliers):
@@ -176,6 +180,7 @@ class TestRadiusOutlierRemoval:
 # crop
 # ---------------------------------------------------------------------------
 
+
 class TestCrop:
     """Tests for crop."""
 
@@ -189,7 +194,7 @@ class TestCrop:
         """All returned points are within the bounding box."""
         bbox = (0.2, 0.2, 0.2, 0.8, 0.8, 0.8)
         result = crop(dense_cloud, bbox=bbox)
-        xmin, ymin, zmin, xmax, ymax, zmax = bbox
+        xmin, _ymin, _zmin, xmax, _ymax, _zmax = bbox
         assert np.all(result.xyz[:, 0] >= xmin)
         assert np.all(result.xyz[:, 0] <= xmax)
 

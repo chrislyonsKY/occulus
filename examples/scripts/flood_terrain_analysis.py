@@ -71,11 +71,16 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Occulus flood terrain analysis demo")
     parser.add_argument("--input", type=Path, default=None)
     parser.add_argument("--subsample", type=float, default=0.3)
-    parser.add_argument("--threshold", type=float, default=10.0,
-                        help="Elevation percentile below which points are flagged as flood risk "
-                             "(default 10 = 10th percentile)")
-    parser.add_argument("--resolution", type=float, default=1.0,
-                        help="CHM resolution in metres (default 1.0)")
+    parser.add_argument(
+        "--threshold",
+        type=float,
+        default=10.0,
+        help="Elevation percentile below which points are flagged as flood risk "
+        "(default 10 = 10th percentile)",
+    )
+    parser.add_argument(
+        "--resolution", type=float, default=1.0, help="CHM resolution in metres (default 1.0)"
+    )
     parser.add_argument("--no-viz", action="store_true")
     args = parser.parse_args()
 
@@ -125,34 +130,40 @@ def main() -> None:
     print(f"  Ground points : {n_ground:,}")
     print(f"  Z min         : {ground_z.min():.2f} m")
     print(f"  Z max         : {ground_z.max():.2f} m")
-    print(f"  P10 / P50 / P90: {percentiles[0]:.2f} / {percentiles[2]:.2f} / {percentiles[4]:.2f} m")
+    print(
+        f"  P10 / P50 / P90: {percentiles[0]:.2f} / {percentiles[2]:.2f} / {percentiles[4]:.2f} m"
+    )
 
-    print(f"\n=== Flood Risk Zones (below {args.threshold:.0f}th percentile = {flood_threshold:.2f} m) ===")
+    print(
+        f"\n=== Flood Risk Zones (below {args.threshold:.0f}th percentile = {flood_threshold:.2f} m) ==="
+    )
     print(f"  At-risk points : {n_flood:,}  ({n_flood / n_ground * 100:.1f}% of ground)")
     print(f"  Safe points    : {n_ground - n_flood:,}")
     print(f"  Risk threshold : {flood_threshold:.2f} m AMSL")
 
     # -- CHM for context ------------------------------------------------------
-    chm, x_edges, y_edges = canopy_height_model(classified, resolution=args.resolution)
+    chm, _x_edges, _y_edges = canopy_height_model(classified, resolution=args.resolution)
     valid = ~np.isnan(chm)
     if valid.any():
         low_cells = int((chm[valid] <= flood_threshold).sum())
         print(f"\n=== Grid-Level Flood Risk (resolution={args.resolution} m) ===")
         print(f"  Total valid cells    : {int(valid.sum())}")
         print(f"  At-risk grid cells   : {low_cells}  ({low_cells / valid.sum() * 100:.1f}%)")
-        area_m2 = low_cells * args.resolution ** 2
+        area_m2 = low_cells * args.resolution**2
         print(f"  Estimated risk area  : {area_m2:.0f} m²  ({area_m2 / 1e4:.2f} ha)")
 
     # -- Visualization --------------------------------------------------------
     if not args.no_viz:
         try:
             from occulus.viz import visualize_segments
+
             all_z = classified.xyz[:, 2]
             per_point_threshold = float(np.percentile(all_z, args.threshold))
             labels = np.where(all_z <= per_point_threshold, 1, 0).astype("int32")
             logger.info("Opening Open3D viewer (red = flood risk)…")
-            visualize_segments(classified, labels,
-                               window_name=f"Flood Risk — below {args.threshold:.0f}th pct")
+            visualize_segments(
+                classified, labels, window_name=f"Flood Risk — below {args.threshold:.0f}th pct"
+            )
         except ImportError:
             logger.warning("open3d not installed — skipping visualization.")
 

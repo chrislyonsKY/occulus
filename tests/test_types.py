@@ -5,8 +5,8 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
+from occulus.exceptions import OcculusValidationError
 from occulus.types import (
-    AcquisitionMetadata,
     AerialCloud,
     Platform,
     PointCloud,
@@ -14,7 +14,6 @@ from occulus.types import (
     TerrestrialCloud,
     UAVCloud,
 )
-from occulus.exceptions import OcculusValidationError
 
 
 @pytest.fixture
@@ -87,6 +86,7 @@ class TestAerialCloud:
     def test_ground_points_raises_without_classification(self, sample_xyz: np.ndarray) -> None:
         """ground_points raises OcculusValidationError when no classification array present."""
         from occulus.exceptions import OcculusValidationError
+
         cloud = AerialCloud(sample_xyz)
         with pytest.raises(OcculusValidationError, match="classification"):
             cloud.ground_points()

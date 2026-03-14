@@ -13,12 +13,12 @@ from occulus.segmentation import (
     cluster_dbscan,
     segment_trees,
 )
-from occulus.types import AerialCloud, Platform, PointCloud, TerrestrialCloud
-
+from occulus.types import AerialCloud, PointCloud, TerrestrialCloud
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def terrain_cloud() -> PointCloud:
@@ -49,6 +49,7 @@ def two_cluster_cloud() -> PointCloud:
 # ---------------------------------------------------------------------------
 # CSF ground classification
 # ---------------------------------------------------------------------------
+
 
 class TestClassifyGroundCSF:
     """Tests for classify_ground_csf."""
@@ -91,6 +92,7 @@ class TestClassifyGroundCSF:
 # PMF ground classification
 # ---------------------------------------------------------------------------
 
+
 class TestClassifyGroundPMF:
     """Tests for classify_ground_pmf."""
 
@@ -120,6 +122,7 @@ class TestClassifyGroundPMF:
 # ---------------------------------------------------------------------------
 # DBSCAN clustering
 # ---------------------------------------------------------------------------
+
 
 class TestClusterDBSCAN:
     """Tests for cluster_dbscan."""
@@ -164,6 +167,7 @@ class TestClusterDBSCAN:
 # ---------------------------------------------------------------------------
 # Tree segmentation
 # ---------------------------------------------------------------------------
+
 
 class TestSegmentTrees:
     """Tests for segment_trees."""

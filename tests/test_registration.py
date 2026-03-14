@@ -23,10 +23,10 @@ from occulus.registration.icp import (
 )
 from occulus.types import PointCloud
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def flat_source() -> PointCloud:
@@ -47,6 +47,7 @@ def flat_source_shifted(flat_source) -> PointCloud:
 # ---------------------------------------------------------------------------
 # ICP point-to-point
 # ---------------------------------------------------------------------------
+
 
 class TestICPPointToPoint:
     """Tests for icp_point_to_point."""
@@ -69,7 +70,8 @@ class TestICPPointToPoint:
     def test_converges_for_close_clouds(self, flat_source, flat_source_shifted):
         """ICP converges when clouds are close together."""
         result = icp_point_to_point(
-            flat_source_shifted, flat_source,
+            flat_source_shifted,
+            flat_source,
             max_correspondence_distance=0.2,
             max_iterations=50,
         )
@@ -79,7 +81,8 @@ class TestICPPointToPoint:
         """ICP raises OcculusValidationError for wrong-shape init_transform."""
         with pytest.raises(OcculusValidationError):
             icp_point_to_point(
-                flat_source_shifted, flat_source,
+                flat_source_shifted,
+                flat_source,
                 init_transform=np.eye(3),  # wrong shape
             )
 
@@ -87,6 +90,7 @@ class TestICPPointToPoint:
 # ---------------------------------------------------------------------------
 # ICP point-to-plane
 # ---------------------------------------------------------------------------
+
 
 class TestICPPointToPlane:
     """Tests for icp_point_to_plane."""
@@ -113,6 +117,7 @@ class TestICPPointToPlane:
 # icp dispatcher
 # ---------------------------------------------------------------------------
 
+
 class TestICPDispatcher:
     """Tests for the icp() auto-dispatch function."""
 
@@ -135,7 +140,8 @@ class TestICPDispatcher:
     def test_explicit_p2p_method(self, flat_source, flat_source_shifted):
         """icp() with method='point_to_point' runs point-to-point ICP."""
         result = icp(
-            flat_source_shifted, flat_source,
+            flat_source_shifted,
+            flat_source,
             method="point_to_point",
             max_correspondence_distance=0.3,
         )
@@ -145,6 +151,7 @@ class TestICPDispatcher:
 # ---------------------------------------------------------------------------
 # align_scans
 # ---------------------------------------------------------------------------
+
 
 class TestAlignScans:
     """Tests for the multi-scan alignment function."""
@@ -157,6 +164,7 @@ class TestAlignScans:
     def test_returns_n_transformations(self, flat_source, flat_source_shifted):
         """align_scans returns one transformation per input cloud."""
         from occulus.registration import AlignmentResult
+
         result = align_scans(
             [flat_source, flat_source_shifted],
             max_correspondence_distance=0.3,
@@ -176,6 +184,7 @@ class TestAlignScans:
 # ---------------------------------------------------------------------------
 # Internal helper tests
 # ---------------------------------------------------------------------------
+
 
 class TestICPHelpers:
     """Tests for ICP internal helpers."""

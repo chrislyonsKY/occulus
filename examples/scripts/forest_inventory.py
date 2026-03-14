@@ -106,8 +106,8 @@ def main() -> None:
     classified = classify_ground_csf(cloud)
     if isinstance(classified, AerialCloud) and classified.classification is not None:
         n_ground = int((classified.classification == 2).sum())
-        print(f"\n=== 2. Ground Classification ===")
-        print(f"  Ground points : {n_ground:,}  ({n_ground/cloud.n_points*100:.1f}%)")
+        print("\n=== 2. Ground Classification ===")
+        print(f"  Ground points : {n_ground:,}  ({n_ground / cloud.n_points * 100:.1f}%)")
 
     # -- CHM ------------------------------------------------------------------
     logger.info("Step 3: Building CHM…")
@@ -115,11 +115,12 @@ def main() -> None:
     valid_chm = chm[~np.isnan(chm)]
     tile_area_m2 = (
         (x_edges[-1] - x_edges[0]) * (y_edges[-1] - y_edges[0])
-        if len(x_edges) > 1 and len(y_edges) > 1 else 0.0
+        if len(x_edges) > 1 and len(y_edges) > 1
+        else 0.0
     )
-    print(f"\n=== 3. Canopy Height Model ===")
+    print("\n=== 3. Canopy Height Model ===")
     print(f"  Grid size     : {chm.shape[0]} × {chm.shape[1]} cells")
-    print(f"  Tile area     : {tile_area_m2:.0f} m²  ({tile_area_m2/1e4:.2f} ha)")
+    print(f"  Tile area     : {tile_area_m2:.0f} m²  ({tile_area_m2 / 1e4:.2f} ha)")
     if valid_chm.size > 0:
         print(f"  Max canopy ht : {valid_chm.max():.1f} m")
         print(f"  Mean canopy ht: {valid_chm.mean():.1f} m")
@@ -127,7 +128,7 @@ def main() -> None:
     # -- Coverage statistics --------------------------------------------------
     logger.info("Step 4: Coverage statistics…")
     cov = coverage_statistics(classified, resolution=args.chm_resolution)
-    print(f"\n=== 4. Coverage Statistics ===")
+    print("\n=== 4. Coverage Statistics ===")
     print(f"  Gap fraction   : {cov.gap_fraction:.2%}")
     print(f"  Covered area   : {cov.covered_area:.1f} m²")
     print(f"  Mean density   : {cov.mean_density:.1f} pts/m²")
@@ -135,7 +136,7 @@ def main() -> None:
     # -- Tree segmentation ----------------------------------------------------
     logger.info("Step 5: Individual tree segmentation…")
     seg = segment_trees(classified, resolution=args.chm_resolution, min_height=args.min_height)
-    print(f"\n=== 5. Tree Inventory ===")
+    print("\n=== 5. Tree Inventory ===")
     print(f"  Trees detected : {seg.n_segments}")
 
     if seg.n_segments > 0 and tile_area_m2 > 0:
@@ -161,15 +162,21 @@ def main() -> None:
     try:
         import matplotlib.pyplot as plt
         from _plot_style import CMAP_CANOPY, apply_report_style, save_figure
+
         apply_report_style()
         fig, axes = plt.subplots(1, 2, figsize=(14, 6))
 
         # CHM
-        im = axes[0].imshow(chm, origin="lower", cmap=CMAP_CANOPY,
-                            extent=[x_edges[0], x_edges[-1], y_edges[0], y_edges[-1]])
+        im = axes[0].imshow(
+            chm,
+            origin="lower",
+            cmap=CMAP_CANOPY,
+            extent=[x_edges[0], x_edges[-1], y_edges[0], y_edges[-1]],
+        )
         plt.colorbar(im, ax=axes[0], label="Canopy height (m)")
         axes[0].set_title("Canopy Height Model — Eastern Kentucky")
-        axes[0].set_xlabel("Easting (m)"); axes[0].set_ylabel("Northing (m)")
+        axes[0].set_xlabel("Easting (m)")
+        axes[0].set_ylabel("Northing (m)")
 
         # Tree height histogram
         if seg.n_segments > 0:
@@ -187,22 +194,28 @@ def main() -> None:
         else:
             valid_chm = chm[~np.isnan(chm)]
             axes[1].hist(valid_chm, bins=40, color="#228B22", alpha=0.75, edgecolor="white")
-            axes[1].set_xlabel("Canopy height (m)"); axes[1].set_ylabel("Cell count")
+            axes[1].set_xlabel("Canopy height (m)")
+            axes[1].set_ylabel("Cell count")
             axes[1].set_title("CHM Value Distribution")
 
         fig.suptitle(
             "USGS 3DEP LiDAR — Full Forest Inventory Pipeline, Kentucky\n"
             f"Trees: {seg.n_segments}  |  Gap fraction: {cov.gap_fraction:.2%}",
-            fontsize=12, fontweight="bold",
+            fontsize=12,
+            fontweight="bold",
         )
         _out_dir = Path(__file__).parent.parent / "outputs"
         _out_dir.mkdir(parents=True, exist_ok=True)
         out = _out_dir / "forest_inventory.png"
-        save_figure(fig, out, alt_text=(
-            "Two-panel figure showing forest inventory results: canopy height model "
-            "raster (left) and tree height distribution histogram (right) for an "
-            "eastern Kentucky forested tile."
-        ))
+        save_figure(
+            fig,
+            out,
+            alt_text=(
+                "Two-panel figure showing forest inventory results: canopy height model "
+                "raster (left) and tree height distribution histogram (right) for an "
+                "eastern Kentucky forested tile."
+            ),
+        )
         logger.info("Saved → %s", out)
         plt.close()
     except ImportError:
@@ -212,9 +225,11 @@ def main() -> None:
     if not args.no_viz:
         try:
             from occulus.viz import visualize_segments
+
             logger.info("Opening Open3D viewer (%d trees)…", seg.n_segments)
-            visualize_segments(classified, seg.labels,
-                               window_name=f"Forest Inventory — {seg.n_segments} trees")
+            visualize_segments(
+                classified, seg.labels, window_name=f"Forest Inventory — {seg.n_segments} trees"
+            )
         except ImportError:
             logger.warning("open3d not installed — skipping visualization.")
 

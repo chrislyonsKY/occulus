@@ -97,7 +97,6 @@ def main() -> None:
     cloud = read(path, platform="aerial", subsample=args.subsample)
     logger.info("Loaded: %s", cloud)
 
-    import numpy as np
     from occulus.types import AerialCloud
 
     stats = compute_cloud_statistics(cloud)
@@ -112,42 +111,55 @@ def main() -> None:
 
     if isinstance(classified, AerialCloud) and classified.classification is not None:
         n_g = int((classified.classification == 2).sum())
-        print(f"\n=== Ground Classification ===")
+        print("\n=== Ground Classification ===")
         print(f"  Ground : {n_g:,} ({n_g / cloud.n_points:.1%})")
         print(f"  Above  : {cloud.n_points - n_g:,}")
 
     try:
         import matplotlib.pyplot as plt
-        from _plot_style import apply_report_style, save_figure, add_cross_section_line
+        from _plot_style import add_cross_section_line, apply_report_style, save_figure
+
         apply_report_style()
         xyz = cloud.xyz
 
         fig, axes = plt.subplots(1, 2, figsize=(14, 6))
 
         sc = axes[0].scatter(
-            xyz[:, 0], xyz[:, 1], c=xyz[:, 2],
-            cmap="copper", s=0.3, alpha=0.5, rasterized=True,
+            xyz[:, 0],
+            xyz[:, 1],
+            c=xyz[:, 2],
+            cmap="copper",
+            s=0.3,
+            alpha=0.5,
+            rasterized=True,
         )
         plt.colorbar(sc, ax=axes[0], label="Elevation (m)")
         axes[0].set_title("Plan View — Utah Canyonlands")
-        axes[0].set_xlabel("Easting (m)"); axes[0].set_ylabel("Northing (m)")
+        axes[0].set_xlabel("Easting (m)")
+        axes[0].set_ylabel("Northing (m)")
 
-        add_cross_section_line(axes[0], axes[1], xyz, y_frac=0.5,
-                               band_frac=0.03, label="Cross Section A–A\u2032")
+        add_cross_section_line(
+            axes[0], axes[1], xyz, y_frac=0.5, band_frac=0.03, label="Cross Section A–A\u2032"
+        )
 
         fig.suptitle(
             "USGS 3DEP LiDAR — Utah Canyonlands, Colorado Plateau\n"
             f"Points: {cloud.n_points:,}  |  Relief: {stats.z_max - stats.z_min:.0f} m  |  "
             f"Ground: {n_g:,} ({n_g / cloud.n_points:.1%})",
-            fontsize=11, fontweight="bold",
+            fontsize=11,
+            fontweight="bold",
         )
-        plt.tight_layout()
+        plt.tight_layout(rect=[0, 0, 1, 0.92])
         out = OUTPUTS / "utah_canyon_geology.png"
-        save_figure(fig, out, alt_text=(
-            "Two-panel figure showing Utah Canyonlands LiDAR analysis: plan view "
-            "colored by elevation showing canyon walls, and east-west cross-section "
-            "through canyon terrain with 300-500 m relief."
-        ))
+        save_figure(
+            fig,
+            out,
+            alt_text=(
+                "Two-panel figure showing Utah Canyonlands LiDAR analysis: plan view "
+                "colored by elevation showing canyon walls, and east-west cross-section "
+                "through canyon terrain with 300-500 m relief."
+            ),
+        )
         logger.info("Saved → %s", out)
         plt.close()
     except ImportError:
@@ -156,6 +168,7 @@ def main() -> None:
     if not args.no_viz:
         try:
             from occulus.viz import visualize
+
             visualize(cloud, window_name="Utah Canyonlands — Colorado Plateau")
         except ImportError:
             logger.warning("open3d not installed.")

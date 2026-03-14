@@ -29,12 +29,12 @@ from occulus.registration.icp import (
 )
 
 __all__ = [
-    "RegistrationResult",
-    "icp",
-    "icp_point_to_point",
-    "icp_point_to_plane",
-    "compute_fpfh",
-    "ransac_registration",
     "AlignmentResult",
+    "RegistrationResult",
     "align_scans",
+    "compute_fpfh",
+    "icp",
+    "icp_point_to_plane",
+    "icp_point_to_point",
+    "ransac_registration",
 ]

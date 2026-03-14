@@ -98,6 +98,7 @@ def main() -> None:
     logger.info("Loaded: %s", cloud)
 
     import numpy as np
+
     from occulus.types import AerialCloud
 
     stats = compute_cloud_statistics(cloud)
@@ -112,7 +113,7 @@ def main() -> None:
 
     if isinstance(classified, AerialCloud) and classified.classification is not None:
         n_g = int((classified.classification == 2).sum())
-        print(f"\n=== Ground Classification ===")
+        print("\n=== Ground Classification ===")
         print(f"  Ground : {n_g:,} ({n_g / cloud.n_points:.1%})")
 
     chm = xe = ye = None
@@ -120,7 +121,7 @@ def main() -> None:
         try:
             chm, xe, ye = canopy_height_model(classified, resolution=args.resolution)
             valid = chm[~np.isnan(chm)]
-            print(f"\n=== Canopy Height Model ===")
+            print("\n=== Canopy Height Model ===")
             print(f"  CHM cells  : {chm.size:,}")
             if valid.size:
                 print(f"  Max height : {valid.max():.1f} m")
@@ -129,7 +130,8 @@ def main() -> None:
 
     try:
         import matplotlib.pyplot as plt
-        from _plot_style import apply_report_style, save_figure, add_cross_section_line
+        from _plot_style import add_cross_section_line, apply_report_style, save_figure
+
         apply_report_style()
         xyz = cloud.xyz
 
@@ -141,40 +143,55 @@ def main() -> None:
         ax_hist = fig.add_subplot(gs[1, 1])
 
         sc = ax_plan.scatter(
-            xyz[:, 0], xyz[:, 1], c=xyz[:, 2],
-            cmap="terrain", s=0.3, alpha=0.5, rasterized=True,
+            xyz[:, 0],
+            xyz[:, 1],
+            c=xyz[:, 2],
+            cmap="terrain",
+            s=0.3,
+            alpha=0.5,
+            rasterized=True,
         )
         plt.colorbar(sc, ax=ax_plan, label="Elevation (m)")
         ax_plan.set_title("Plan View — Colorado Front Range")
-        ax_plan.set_xlabel("Easting (m)"); ax_plan.set_ylabel("Northing (m)")
+        ax_plan.set_xlabel("Easting (m)")
+        ax_plan.set_ylabel("Northing (m)")
 
-        add_cross_section_line(ax_plan, ax_prof, xyz, y_frac=0.5,
-                               band_frac=0.03, label="Cross Section A–A\u2032")
+        add_cross_section_line(
+            ax_plan, ax_prof, xyz, y_frac=0.5, band_frac=0.03, label="Cross Section A–A\u2032"
+        )
 
         if chm is not None and xe is not None:
-            im = ax_chm.imshow(chm, origin="lower", cmap="Greens",
-                               extent=[xe[0], xe[-1], ye[0], ye[-1]])
+            im = ax_chm.imshow(
+                chm, origin="lower", cmap="Greens", extent=[xe[0], xe[-1], ye[0], ye[-1]]
+            )
             plt.colorbar(im, ax=ax_chm, label="Canopy height (m)")
             ax_chm.set_title("Canopy Height Model")
         else:
-            ax_chm.text(0.5, 0.5, "CHM not available", transform=ax_chm.transAxes,
-                        ha="center", va="center")
+            ax_chm.text(
+                0.5, 0.5, "CHM not available", transform=ax_chm.transAxes, ha="center", va="center"
+            )
 
         ax_hist.hist(xyz[:, 2], bins=60, color="saddlebrown", alpha=0.75, edgecolor="white")
-        ax_hist.set_xlabel("Elevation (m)"); ax_hist.set_ylabel("Point count")
+        ax_hist.set_xlabel("Elevation (m)")
+        ax_hist.set_ylabel("Point count")
         ax_hist.set_title("Elevation Distribution")
 
         fig.suptitle(
             "USGS 3DEP LiDAR — Colorado Front Range / Rocky Mountains\n"
             f"Points: {cloud.n_points:,}  |  Relief: {stats.z_max - stats.z_min:.0f} m",
-            fontsize=12, fontweight="bold",
+            fontsize=12,
+            fontweight="bold",
         )
         out = OUTPUTS / "colorado_rocky_mountain_terrain.png"
-        save_figure(fig, out, alt_text=(
-            "Four-panel figure showing Colorado Front Range LiDAR analysis: plan view "
-            "colored by elevation, east-west cross-section through Rocky Mountain terrain, "
-            "canopy height model, and elevation histogram showing 2000+ m relief."
-        ))
+        save_figure(
+            fig,
+            out,
+            alt_text=(
+                "Four-panel figure showing Colorado Front Range LiDAR analysis: plan view "
+                "colored by elevation, east-west cross-section through Rocky Mountain terrain, "
+                "canopy height model, and elevation histogram showing 2000+ m relief."
+            ),
+        )
         logger.info("Saved → %s", out)
         plt.close()
     except ImportError:
@@ -183,6 +200,7 @@ def main() -> None:
     if not args.no_viz:
         try:
             from occulus.viz import visualize
+
             visualize(cloud, window_name="Colorado Rocky Mountain Terrain")
         except ImportError:
             logger.warning("open3d not installed.")
