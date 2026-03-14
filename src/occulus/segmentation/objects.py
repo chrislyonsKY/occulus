@@ -206,13 +206,13 @@ def segment_trees(
             lbl = labels_grid[row_idx[i], col_idx[i]]
             pt_labels[i] = int(lbl) - 1  # 0-indexed; 0 in grid → -1 (unlabelled)
 
-    unique_labels = set(pt_labels) - {-1}
+    unique_labels = {int(x) for x in set(pt_labels) - {-1}}
     segment_sizes: dict[int, int] = {}
     for lbl in unique_labels:
         count = int((pt_labels == lbl).sum())
         # Prune tiny segments
         if count * resolution**2 >= min_crown_area:
-            segment_sizes[lbl] = count
+            segment_sizes[int(lbl)] = count
         else:
             pt_labels[pt_labels == lbl] = -1
 

@@ -378,14 +378,16 @@ def _init_transform(init: NDArray[np.float64] | None) -> NDArray[np.float64]:
     return arr.copy()
 
 
-def _apply_transform(xyz: NDArray[np.float64], T: NDArray[np.float64]) -> NDArray[np.float64]:
+def _apply_transform(
+    xyz: NDArray[np.float64], transform: NDArray[np.float64]
+) -> NDArray[np.float64]:
     """Apply a 4×4 rigid transform to an (N, 3) array.
 
     Parameters
     ----------
     xyz : NDArray[np.float64]
         Input points (N, 3).
-    T : NDArray[np.float64]
+    transform : NDArray[np.float64]
         4×4 transformation matrix.
 
     Returns
@@ -396,7 +398,7 @@ def _apply_transform(xyz: NDArray[np.float64], T: NDArray[np.float64]) -> NDArra
     n = xyz.shape[0]
     ones = np.ones((n, 1), dtype=np.float64)
     homogeneous = np.hstack((xyz, ones))  # (N, 4)
-    return (T @ homogeneous.T).T[:, :3]
+    return (transform @ homogeneous.T).T[:, :3]
 
 
 def _svd_rigid(

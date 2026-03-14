@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 _CPP_AVAILABLE = False
 
 try:
-    from occulus._cpp._core import (  # type: ignore[import-not-found]
+    from occulus._cpp._core import (  # type: ignore[import-not-found,unused-ignore]
         features,
         filters,
         kdtree,

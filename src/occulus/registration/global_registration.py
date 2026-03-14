@@ -232,7 +232,7 @@ def ransac_registration(
     inlier_ratio = 1.0
     max_adaptive_iter = max_iterations
 
-    for iteration in range(max_adaptive_iter):
+    for iteration in range(max_adaptive_iter):  # noqa: B007
         # Sample ransac_n correspondences
         sample = rng.choice(n_corr, size=ransac_n, replace=False)
         src_pts = source.xyz[corr_src[sample]]

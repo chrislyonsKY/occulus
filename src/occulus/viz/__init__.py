@@ -23,7 +23,6 @@ from occulus.types import PointCloud
 
 if TYPE_CHECKING:
     from occulus.registration.icp import RegistrationResult
-    from occulus.segmentation.objects import SegmentationResult
 
 logger = logging.getLogger(__name__)
 

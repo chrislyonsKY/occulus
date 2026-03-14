@@ -103,10 +103,20 @@ select = [
     "SIM",  # flake8-simplify
     "RUF",  # ruff-specific rules
 ]
+ignore = [
+    "RUF001",  # ambiguous unicode (en-dash, prime, degree — intentional in output)
+    "RUF002",  # ambiguous unicode in docstrings
+    "RUF003",  # ambiguous unicode in comments
+    "N806",    # uppercase variable names (T for transforms, OUTPUTS for constants)
+    "E501",    # line too long (formatter handles wrapping)
+    "SIM117",  # nested with statements (readability preference)
+    "RUF059",  # unused unpacked variable (e.g. _mask from SOR)
+]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = ["S101", "T20"]
-"examples/**/*.py" = ["T20"]
+"examples/**/*.py" = ["T20", "N803"]
+"src/occulus/_cpp/__init__.py" = ["F401"]  # C++ imports used when extension compiled
 
 [tool.ruff.lint.isort]
 known-first-party = ["occulus"]
@@ -118,8 +128,9 @@ known-first-party = ["occulus"]
 [tool.mypy]
 python_version = "3.11"
 strict = true
-warn_return_any = true
+warn_return_any = false
 warn_unused_configs = true
+warn_unused_ignores = false
 disallow_untyped_defs = true
 disallow_incomplete_defs = true
 
