@@ -18,14 +18,16 @@ pylon/tower structures.
 
 Study Area
 ----------
-Anderson County, Tennessee — TVA transmission corridor.
-Bounding box: 84.1°W – 84.0°W, 36.2°N – 36.3°N.
-Terrain: Appalachian Ridge and Valley, mixed hardwood forest,
-suburban development, with TVA high-voltage transmission lines.
+Sedgwick County, Kansas — suburban Wichita.
+Bounding box: 97.4°W – 97.3°W, 37.7°N – 37.8°N.
+Terrain: Great Plains, flat (< 5 m local relief), residential
+development with utility distribution and transmission lines.
+Flat terrain chosen to minimise false positives from topographic
+ridgelines that confound linearity-based detection in mountains.
 
 Data
 ----
-USGS 3DEP — TN 27-County Block 1 (2015). Public domain.
+USGS 3DEP — KS Sedgwick/Wichita (2008). Public domain.
 Acquired via USGS National Map API (TNM).
 
 Methods
@@ -69,7 +71,10 @@ logger = logging.getLogger(__name__)
 OUTPUTS = Path(__file__).parent.parent / "outputs"
 
 # ── Study area ──────────────────────────────────────────────────────────────
-_BBOX = "-84.1,36.2,-84.0,36.3"
+# Wichita / Sedgwick County, KS — flat Great Plains terrain with
+# residential development, roads, and transmission/distribution lines.
+# Flat terrain minimises false positives from ridgeline geometry.
+_BBOX = "-97.4,37.7,-97.3,37.8"
 
 _TNM_URL = (
     "https://tnmaccess.nationalmap.gov/api/v1/products"
@@ -77,15 +82,21 @@ _TNM_URL = (
     "&max=1&prodFormats=LAZ"
 )
 
+# Fallback direct URL if TNM API fails
+_FALLBACK_URL = (
+    "https://rockyweb.usgs.gov/vdelivery/Datasets/Staged/Elevation/LPC/Projects/"
+    "legacy/KS_SEDGWICK_WICHITA_2008/LAZ/USGS_LPC_KS_SEDGWICK_WICHITA_2008_000011.laz"
+)
+
 # ── Method parameters ──────────────────────────────────────────────────────
-_LINEARITY_THRESHOLD = 0.7
-_MIN_HEIGHT = 3.0  # metres above ground
-_MAX_HEIGHT = 50.0  # metres above ground
+_LINEARITY_THRESHOLD = 0.6  # lower threshold for sparse wire returns
+_MIN_HEIGHT = 4.0  # metres above ground — above fences/cars
+_MAX_HEIGHT = 40.0  # metres above ground
 
 
 def _find_tile() -> str:
     """Query USGS TNM for a Tennessee tile."""
-    logger.info("Querying USGS National Map for TN transmission corridor tile…")
+    logger.info("Querying USGS National Map for KS suburban tile…")
     import certifi
 
     req = urllib.request.Request(
@@ -95,14 +106,13 @@ def _find_tile() -> str:
     try:
         with urllib.request.urlopen(req, timeout=30, context=ctx) as resp:
             data = json.loads(resp.read())
+        items = data.get("items", [])
+        if not items:
+            raise ValueError("No tiles found")
+        url = items[0]["downloadURL"]
     except Exception as exc:
-        logger.error("TNM API query failed: %s", exc)
-        sys.exit(1)
-    items = data.get("items", [])
-    if not items:
-        logger.error("No tiles found for TN bbox %s", _BBOX)
-        sys.exit(1)
-    url = items[0]["downloadURL"]
+        logger.warning("TNM API failed (%s), using fallback URL", exc)
+        url = _FALLBACK_URL
     logger.info("Found tile: %s", url.split("/")[-1])
     return url
 
@@ -115,7 +125,7 @@ def _fetch(url: str, cache: Path) -> Path:
     if dest.exists():
         logger.info("Using cached tile: %s", dest.name)
         return dest
-    logger.info("Downloading TN tile…")
+    logger.info("Downloading KS tile…")
     req = urllib.request.Request(
         url, headers={"User-Agent": "Mozilla/5.0 occulus-examples/1.0"}
     )
@@ -136,7 +146,7 @@ def main() -> None:
         description="Powerline detection from real USGS 3DEP LiDAR"
     )
     parser.add_argument("--input", type=Path, default=None)
-    parser.add_argument("--subsample", type=float, default=0.15)
+    parser.add_argument("--subsample", type=float, default=0.30)
     parser.add_argument("--no-viz", action="store_true")
     args = parser.parse_args()
 
@@ -158,10 +168,10 @@ def main() -> None:
 
     print("\n" + "=" * 60)
     print("  STUDY: Powerline Detection from Airborne LiDAR")
-    print("  Site:  Anderson County, TN (TVA corridor)")
+    print("  Site:  Sedgwick County, KS (suburban Wichita)")
     print("=" * 60)
     print("\n  1. DATA SUMMARY")
-    print("     Source         : USGS 3DEP (TN 27-County 2015)")
+    print("     Source         : USGS 3DEP (KS Sedgwick/Wichita 2008)")
     print(f"     Points loaded  : {cloud.n_points:,} ({args.subsample:.0%} subsample)")
     print(f"     Z range        : {stats.z_min:.1f} – {stats.z_max:.1f} m")
 
@@ -301,7 +311,7 @@ def main() -> None:
         ax_plan.set_aspect("equal", adjustable="datalim")
 
         fig.suptitle(
-            "Powerline Detection from USGS 3DEP ALS — Anderson Co., TN\n"
+            "Powerline Detection from USGS 3DEP ALS — Sedgwick Co., KS\n"
             f"n = {cloud.n_points:,} points  |  "
             f"{n_wire:,} wire + {n_pylon:,} pylon detected  |  "
             f"{len(result.pylon_positions)} towers",
@@ -316,7 +326,7 @@ def main() -> None:
             out,
             alt_text=(
                 "Two-panel figure showing powerline detection from USGS 3DEP "
-                "LiDAR over Anderson County, Tennessee. Panel (a) is a side "
+                "LiDAR over Sedgwick County, Kansas. Panel (a) is a side "
                 "elevation view with detected wires in red and pylons in orange "
                 "against gray ground/vegetation. Panel (b) is a plan view "
                 "showing wire traces and diamond markers at pylon positions."
@@ -352,7 +362,7 @@ def main() -> None:
         try:
             from occulus.viz import visualize
 
-            visualize(classified, window_name="Powerline Detection — TN")
+            visualize(classified, window_name="Powerline Detection — KS")
         except ImportError:
             logger.warning("open3d not installed.")
 
