@@ -184,8 +184,7 @@ def segment_trees(
         nx = max(2, int(np.ceil((x_max - x_min) / resolution)) + 1)
         ny = max(2, int(np.ceil((y_max - y_min) / resolution)) + 1)
         logger.warning(
-            "CHM raster %dx%d exceeds max_raster_size=%d, "
-            "coarsening resolution from %.4f to %.4f",
+            "CHM raster %dx%d exceeds max_raster_size=%d, coarsening resolution from %.4f to %.4f",
             max(2, int(np.ceil((x_max - x_min) / old_resolution)) + 1),
             max(2, int(np.ceil((y_max - y_min) / old_resolution)) + 1),
             max_raster_size,

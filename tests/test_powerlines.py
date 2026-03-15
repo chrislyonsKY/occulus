@@ -127,7 +127,7 @@ def _make_wide_pylon_cloud(
     # Wide "pylon" (building): 10m x 10m footprint, 12m tall
     n_wide = 60
     bx = rng.uniform(20, 30, n_wide)  # 10m wide
-    by = rng.uniform(5, 15, n_wide)   # 10m deep
+    by = rng.uniform(5, 15, n_wide)  # 10m deep
     bz = rng.uniform(0, 12, n_wide)
     wide_pylon = np.column_stack((bx, by, bz))
 
@@ -572,14 +572,15 @@ class TestFilterOrphanWires:
 
         seg = CatenarySegment(
             indices=np.arange(n, dtype=np.intp),
-            a=0.0, x0=0.0, z0=0.0, rmse=float("inf"),
+            a=0.0,
+            x0=0.0,
+            z0=0.0,
+            rmse=float("inf"),
         )
         wire_mask = np.ones(n, dtype=bool)
         pylons = np.array([[0, 0, 10], [80, 0, 10]], dtype=np.float64)
 
-        segs_out, mask_out = _filter_orphan_wires(
-            xyz, [seg], wire_mask, pylons, radius=10.0
-        )
+        segs_out, mask_out = _filter_orphan_wires(xyz, [seg], wire_mask, pylons, radius=10.0)
         assert len(segs_out) == 1
         assert mask_out.sum() == n
 
@@ -592,13 +593,14 @@ class TestFilterOrphanWires:
 
         seg = CatenarySegment(
             indices=np.arange(n, dtype=np.intp),
-            a=0.0, x0=0.0, z0=0.0, rmse=float("inf"),
+            a=0.0,
+            x0=0.0,
+            z0=0.0,
+            rmse=float("inf"),
         )
         wire_mask = np.ones(n, dtype=bool)
         pylons = np.array([[0, 0, 10], [80, 0, 10]], dtype=np.float64)
 
-        segs_out, mask_out = _filter_orphan_wires(
-            xyz, [seg], wire_mask, pylons, radius=10.0
-        )
+        segs_out, mask_out = _filter_orphan_wires(xyz, [seg], wire_mask, pylons, radius=10.0)
         assert len(segs_out) == 0
         assert mask_out.sum() == 0

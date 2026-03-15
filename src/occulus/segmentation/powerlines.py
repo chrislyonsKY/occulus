@@ -363,9 +363,7 @@ def detect_powerlines(
     pylon_positions = np.empty((0, 3), dtype=np.float64)
 
     if len(pylon_candidate_indices) > 0:
-        pylon_labels = _dbscan_cluster(
-            cloud.xyz[pylon_candidate_indices], eps=5.0, min_samples=3
-        )
+        pylon_labels = _dbscan_cluster(cloud.xyz[pylon_candidate_indices], eps=5.0, min_samples=3)
 
         pylon_unique = set(pylon_labels) - {-1}
         if pylon_unique:
@@ -404,8 +402,7 @@ def detect_powerlines(
 
             if strict and (n_rejected_wide > 0 or n_rejected_short > 0):
                 logger.debug(
-                    "Strict pylon filtering: rejected %d wide clusters, "
-                    "%d short clusters",
+                    "Strict pylon filtering: rejected %d wide clusters, %d short clusters",
                     n_rejected_wide,
                     n_rejected_short,
                 )
