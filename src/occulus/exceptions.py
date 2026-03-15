@@ -49,3 +49,23 @@ class OcculusNetworkError(OcculusError):
 
 class UnsupportedPlatformError(OcculusError):
     """Raised when an operation is not supported for the given acquisition platform."""
+
+
+class OcculusCRSError(OcculusError):
+    """Raised when coordinate reference system operations fail."""
+
+
+class OcculusChangeDetectionError(OcculusError):
+    """Raised when multi-epoch change detection fails."""
+
+
+class OcculusRasterError(OcculusError):
+    """Raised when rasterization or DEM generation fails."""
+
+
+class OcculusExportError(OcculusError):
+    """Raised when 3D Tiles, Potree, or other export operations fail."""
+
+
+class OcculusMLError(OcculusError):
+    """Raised when machine learning inference fails."""

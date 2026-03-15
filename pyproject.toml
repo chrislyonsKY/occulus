@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "occulus"
-version = "1.0.0"
+version = "1.1.0"
 description = "Multi-platform point cloud analysis — registration, segmentation, meshing, and feature extraction"
 readme = "README.md"
 license = "GPL-3.0-or-later"
@@ -43,10 +43,18 @@ dependencies = [
     "pyproj>=3.6",
 ]
 
+[project.scripts]
+occulus = "occulus.cli.main:main"
+
 [project.optional-dependencies]
 las = ["laspy[lazrs]>=2.5"]
 viz = ["open3d>=0.17", "matplotlib>=3.8"]
-all = ["occulus[las,viz]"]
+raster = ["rasterio>=1.3"]
+copc = ["httpx>=0.27"]
+web = ["py3dtiles>=7.0"]
+ml = ["onnxruntime>=1.16"]
+ml-torch = ["torch>=2.0", "onnxruntime>=1.16"]
+all = ["occulus[las,viz,raster,copc,web]"]
 dev = [
     "pytest>=8.0",
     "pytest-cov>=5.0",
