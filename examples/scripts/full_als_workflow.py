@@ -47,6 +47,12 @@ _TNM_URL = (
     "&max=1&prodFormats=LAZ"
 )
 
+_FALLBACK_URL = (
+    "https://rockyweb.usgs.gov/vdelivery/Datasets/Staged/Elevation/LPC/Projects/"
+    "VA_West_Chesapeake_Bay_Watershed_Lidar_2017_B17/VA_West_Chesapeake_B1_2017/"
+    "LAZ/USGS_LPC_VA_West_Chesapeake_Bay_Watershed_Lidar_2017_B17_LAS_17SPB225730.laz"
+)
+
 
 def _find_tile() -> str:
     """Query USGS TNM for a North Carolina Piedmont tile."""
@@ -62,14 +68,13 @@ def _find_tile() -> str:
         ctx = ssl.create_default_context(cafile=certifi.where())
         with urllib.request.urlopen(req, timeout=30, context=ctx) as resp:
             data = json.loads(resp.read())
+        items = data.get("items", [])
+        if not items:
+            raise ValueError("No tiles found")
+        url = items[0]["downloadURL"]
     except Exception as exc:
-        logger.error("TNM API query failed: %s", exc)
-        sys.exit(1)
-    items = data.get("items", [])
-    if not items:
-        logger.error("No tiles found for VA bbox %s", _DEMO_BBOX)
-        sys.exit(1)
-    url = items[0]["downloadURL"]
+        logger.warning("TNM API failed (%s), using fallback URL", exc)
+        url = _FALLBACK_URL
     logger.info("Found tile: %s", url.split("/")[-1])
     return url
 

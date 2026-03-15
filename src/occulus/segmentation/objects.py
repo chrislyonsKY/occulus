@@ -235,7 +235,7 @@ def segment_trees(
     min_count = min_crown_area / (resolution**2)
     segment_sizes: dict[int, int] = {}
     small_labels = set()
-    for lbl, count in zip(unique_labels, counts):
+    for lbl, count in zip(unique_labels, counts, strict=False):
         if count >= min_count:
             segment_sizes[int(lbl)] = int(count)
         else:

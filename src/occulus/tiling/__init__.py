@@ -61,7 +61,7 @@ def tile_point_cloud(
         Tile edge length in point-cloud coordinate units (default 500 m).
     overlap : float
         Buffer overlap between adjacent tiles in coordinate units.
-    format : str
+    output_format : str
         Output format for tile files ('xyz', 'laz', 'las', 'ply').
 
     Returns
