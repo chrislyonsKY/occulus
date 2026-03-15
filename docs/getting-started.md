@@ -93,11 +93,11 @@ drone  = read("uav.laz", platform="uav")             # → UAVCloud
 
 ## Next Steps
 
-- [API Reference](api/reference.md) — full function documentation
+- [API Reference](api/types.md) — full function documentation
 - [Architecture](architecture.md) — how the package is structured
 - [Examples](https://github.com/chrislyonsKY/occulus/tree/main/examples) — 36 runnable scripts with real-world LiDAR data
 
 ---
 
-[API Reference :material-arrow-right:](api/reference.md){ .md-button .md-button--primary }
+[API Reference :material-arrow-right:](api/types.md){ .md-button .md-button--primary }
 [View Examples :material-github:](https://github.com/chrislyonsKY/occulus/tree/main/examples){ .md-button }
