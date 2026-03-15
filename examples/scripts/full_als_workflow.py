@@ -120,7 +120,7 @@ def main() -> None:
     seg = None
     if isinstance(classified, AerialCloud):
         try:
-            seg = segment_trees(classified, resolution=0.5, min_height=2.0)
+            seg = segment_trees(classified, resolution=2.0, min_height=2.0)
         except Exception as exc:
             logger.warning("Tree segmentation skipped: %s", exc)
 

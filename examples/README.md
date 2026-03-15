@@ -3,6 +3,21 @@
 Runnable scripts demonstrating Occulus in action.
 Each script is self-contained — install the package, run the script.
 
+## Why so many scripts?
+
+Occulus has 10 core modules (I/O, filters, normals, registration, segmentation,
+mesh, features, metrics, visualization, types). Rather than one monolithic demo,
+**each script intentionally focuses on 1–2 modules** so readers can see exactly
+what a specific component does without wading through unrelated code. A terrain
+script might only use `io` + `segmentation`; a registration script only uses
+`filters` + `registration`. The one exception is `coal_mine_terrain.py`, which
+is an explicit "full toolkit" demo that exercises all modules together.
+
+The output gallery below shows results from real public-domain LiDAR — USGS 3DEP,
+KY From Above, and OpenTopography — across diverse terrain types (desert, forest,
+urban, coastal, canyon, wetland, mine, fault zone). Every image is generated
+programmatically by its script; nothing is hand-edited.
+
 ## Scripts
 
 ### Real-World Terrain Analysis (USGS 3DEP / OpenTopography)
@@ -17,6 +32,7 @@ Each script is self-contained — install the package, run the script.
 | `oregon_coast_terrain.py` | Pacific coastal terrain — Heceta Head, Oregon |
 | `louisiana_wetlands_delta.py` | Low-relief wetlands — Atchafalaya Basin, Louisiana |
 | `houston_urban_density.py` | Urban LiDAR density analysis — Houston, TX |
+| `urban_building_detection.py` | Building detection via point density + planarity — Chicago, IL |
 | `pacific_northwest_forest.py` | Old-growth forest inventory — Willamette NF, Oregon |
 | `iran_fault_geomorphology.py` | Fault geomorphology — Sabzevar, NE Iran (OpenTopography) |
 | `netherlands_ahn4_polder.py` | Below-sea-level polder terrain — AHN4, Netherlands |
@@ -101,3 +117,20 @@ jupyter lab examples/notebooks/
 ## Outputs
 
 Real-world output images from example scripts are saved to `examples/outputs/`.
+Each image is generated from public-domain LiDAR data with WCAG 2.1 AA-compliant
+styling (colorblind-safe colormaps, ≥4.5:1 text contrast, embedded alt-text metadata).
+
+| Output | Script | Modules used |
+|---|---|---|
+| ![Arizona](outputs/arizona_desert_terrain.png) | `arizona_desert_terrain.py` | io, segmentation |
+| ![Colorado](outputs/colorado_rocky_mountain_terrain.png) | `colorado_rocky_mountain_terrain.py` | io, segmentation, metrics |
+| ![Utah](outputs/utah_canyon_geology.png) | `utah_canyon_geology.py` | io, segmentation, metrics |
+| ![Oregon](outputs/oregon_coast_terrain.png) | `oregon_coast_terrain.py` | io, segmentation, metrics |
+| ![Louisiana](outputs/louisiana_wetlands_delta.png) | `louisiana_wetlands_delta.py` | io, segmentation, metrics |
+| ![Houston](outputs/houston_urban_density.png) | `houston_urban_density.py` | io, segmentation, metrics |
+| ![Kentucky](outputs/kentucky_ground_classification.png) | `kentucky_ground_classification.py` | io, segmentation |
+| ![KY From Above](outputs/kyfromabove_bluegrass.png) | `kyfromabove_terrain_survey.py` | io, filters, segmentation |
+| ![Ground CSF vs PMF](outputs/ground_comparison_csf_pmf.png) | `ground_comparison_csf_pmf.py` | io, segmentation |
+| ![Slope & Aspect](outputs/slope_aspect_analysis.png) | `slope_aspect_analysis.py` | io, segmentation, metrics |
+| ![Urban Building Detection](outputs/urban_building_detection.png) | `urban_building_detection.py` | io, features, metrics |
+| ![Coal Mine](outputs/coal_mine_terrain.png) | `coal_mine_terrain.py` | all modules |
