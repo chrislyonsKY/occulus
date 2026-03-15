@@ -7,6 +7,34 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.1.0] — 2026-03-15
+
+### Added
+
+- **CLI** — `occulus` command with subcommands: `info`, `classify`, `filter`, `convert`, `dem`, `register`, `tile`. Entry point via `[project.scripts]`.
+- **DEM/DSM/DTM rasterization** (`occulus.raster`) — IDW and nearest-neighbor interpolation, GeoTIFF export via rasterio (optional). `create_dsm`, `create_dtm`, `create_dem`, `RasterResult` dataclass.
+- **M3C2 change detection** (`occulus.change`) — Multi-epoch signed distance computation with Level of Detection (Lague et al. 2013). `m3c2()` function, `M3C2Result` dataclass.
+- **Volume computation** (`occulus.analysis.volume`) — Cut/fill analysis between two surfaces or a surface and reference elevation. `compute_volume()`, `VolumeResult` dataclass.
+- **Cross-section extraction** (`occulus.analysis.cross_section`) — Profile generation along polylines. `extract_cross_section()`, `extract_profiles()`, `CrossSection` dataclass.
+- **CRS transforms** (`occulus.crs`) — `reproject()` and `transform_coordinates()` via pyproj. `PointCloud.reproject()` convenience method added to types.
+- **Tiling** (`occulus.tiling`) — Spatial grid tiling for large datasets. `tile_point_cloud()`, `iter_tiles()`, `process_tiles()`, `Tile` dataclass.
+- **RGB colorization** (`occulus.colorize`) — Drape georeferenced orthoimagery onto point clouds. `colorize_from_raster()`, `colorize_from_array()`.
+- **3D Tiles / Potree export** (`occulus.export`) — `export_3dtiles()` writes `.pnts` binary + `tileset.json`. `export_potree()` writes octree hierarchy + `metadata.json`.
+- **ML semantic segmentation** (`occulus.ml`) — Inference wrappers for ONNX Runtime and PyTorch backends. `predict_semantic()`, `prepare_features()`, `SegmentationPrediction` dataclass.
+- **COPC streaming** (`occulus.io.copc`) — Read Cloud Optimized Point Cloud files with spatial bbox filtering. `read_copc()`, `read_copc_metadata()`, `COPCMetadata` dataclass.
+- **Powerline detection** (`occulus.segmentation.powerlines`) — Wire and pylon detection via linearity/verticality features, DBSCAN clustering, optional catenary fitting and clearance analysis. `detect_powerlines()`, `PowerlineResult` dataclass.
+- **Exceptions** — `OcculusCRSError`, `OcculusChangeDetectionError`, `OcculusRasterError`, `OcculusExportError`, `OcculusMLError`.
+
+### New optional dependencies
+
+- `raster` — `rasterio>=1.3`
+- `copc` — `httpx>=0.27`
+- `web` — `py3dtiles>=7.0`
+- `ml` — `onnxruntime>=1.16`
+- `ml-torch` — `torch>=2.0`, `onnxruntime>=1.16`
+
+---
+
 ## [1.0.0] — 2026-03-14
 
 ### Added

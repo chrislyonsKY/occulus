@@ -73,8 +73,33 @@ markdown_extensions:
 nav:
   - Home: index.md
   - Getting Started: getting-started.md
+  - User Guide:
+      - CLI: guide/cli.md
+      - Tiling Large Datasets: guide/tiling.md
+      - CRS & Reprojection: guide/crs.md
+      - Web Export: guide/export.md
   - API Reference:
-      - Reference: api/reference.md
+      - Types: api/types.md
+      - I/O: api/io.md
+      - Filters: api/filters.md
+      - Normals: api/normals.md
+      - Registration: api/registration.md
+      - Segmentation: api/segmentation.md
+      - Mesh: api/mesh.md
+      - Features: api/features.md
+      - Metrics: api/metrics.md
+      - Raster (DEM/DSM/DTM): api/raster.md
+      - Change Detection (M3C2): api/change.md
+      - Analysis (Volume / Cross-Sections): api/analysis.md
+      - CRS Transforms: api/crs.md
+      - Tiling: api/tiling.md
+      - Colorize: api/colorize.md
+      - Export (3D Tiles / Potree): api/export.md
+      - ML Segmentation: api/ml.md
+      - Powerline Detection: api/powerlines.md
+      - COPC Streaming: api/copc.md
+      - Visualization: api/viz.md
+      - CLI: api/cli.md
   - Architecture: architecture.md
   - Release Notes: release-notes.md
 

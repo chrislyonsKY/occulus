@@ -229,6 +229,30 @@ class PointCloud:
         """Whether RGB color is attached to this cloud."""
         return self.rgb is not None
 
+    def reproject(self, target_crs: str, *, source_crs: str | None = None) -> PointCloud:
+        """Reproject this cloud to a new coordinate reference system.
+
+        Parameters
+        ----------
+        target_crs : str
+            Target CRS identifier (e.g. ``"EPSG:4326"``).
+        source_crs : str, optional
+            Source CRS.  If *None*, inferred from ``metadata.coordinate_system``.
+
+        Returns
+        -------
+        PointCloud
+            A new cloud with reprojected coordinates.
+
+        Raises
+        ------
+        OcculusCRSError
+            If reprojection fails or source CRS cannot be determined.
+        """
+        from occulus.crs import reproject
+
+        return reproject(self, target_crs, source_crs=source_crs)
+
     def to_open3d(self) -> object:
         """Convert to an Open3D PointCloud object.
 
