@@ -38,19 +38,55 @@ logger = logging.getLogger(__name__)
 
 OUTPUTS = Path(__file__).parent.parent / "outputs"
 
-_DEMO_URL = (
-    "https://rockyweb.usgs.gov/vdelivery/Datasets/Staged/Elevation/LPC/Projects/"
-    "KY_CentralEast_A23/KY_CentralEast_1_A23/LAZ/USGS_LPC_KY_CentralEast_A23_N088E243.laz"
+# Use a different tile than canopy_height_model.py (which uses KY CentralEast)
+# North Carolina Piedmont — mixed forest, suburban, varied terrain
+_DEMO_BBOX = "-79.1,35.9,-78.9,36.1"
+_TNM_URL = (
+    "https://tnmaccess.nationalmap.gov/api/v1/products"
+    f"?datasets=Lidar%20Point%20Cloud%20(LPC)&bbox={_DEMO_BBOX}"
+    "&max=1&prodFormats=LAZ"
 )
 
 
+def _find_tile() -> str:
+    """Query USGS TNM for a North Carolina Piedmont tile."""
+    import json
+
+    logger.info("Querying USGS National Map for NC Piedmont LiDAR tile…")
+    req = urllib.request.Request(
+        _TNM_URL, headers={"User-Agent": "Mozilla/5.0 occulus-examples/1.0"}
+    )
+    try:
+        import ssl
+        import certifi
+        ctx = ssl.create_default_context(cafile=certifi.where())
+        with urllib.request.urlopen(req, timeout=30, context=ctx) as resp:
+            data = json.loads(resp.read())
+    except Exception as exc:
+        logger.error("TNM API query failed: %s", exc)
+        sys.exit(1)
+    items = data.get("items", [])
+    if not items:
+        logger.error("No tiles found for NC bbox %s", _DEMO_BBOX)
+        sys.exit(1)
+    url = items[0]["downloadURL"]
+    logger.info("Found tile: %s", url.split("/")[-1])
+    return url
+
+
 def _fetch(url: str, dest: Path) -> Path:
+    """Download a LAZ tile with caching."""
     out = dest / Path(url).name
     if out.exists():
         return out
     logger.info("Downloading demo tile…")
     try:
-        urllib.request.urlretrieve(url, str(out))
+        import ssl
+        import certifi
+        ctx = ssl.create_default_context(cafile=certifi.where())
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 occulus-examples/1.0"})
+        with urllib.request.urlopen(req, timeout=120, context=ctx) as resp:
+            out.write_bytes(resp.read())
     except Exception as exc:
         logger.error("Download failed: %s — use --input with a local file.", exc)
         sys.exit(1)
@@ -80,7 +116,7 @@ def main() -> None:
     # Step 1: Read
     cache = Path(tempfile.gettempdir()) / "occulus_demo"
     cache.mkdir(parents=True, exist_ok=True)
-    path = args.input or _fetch(_DEMO_URL, cache)
+    path = args.input or _fetch(_find_tile(), cache)
 
     logger.info("[1/9] Reading point cloud…")
     cloud = read(path, platform="aerial", subsample=args.subsample)
@@ -110,8 +146,8 @@ def main() -> None:
     chm = cov = None
     if isinstance(classified, AerialCloud):
         try:
-            chm, xe, ye = canopy_height_model(classified, resolution=1.0)
-            cov = coverage_statistics(classified, resolution=1.0)
+            chm, xe, ye = canopy_height_model(classified, resolution=3.0)
+            cov = coverage_statistics(classified, resolution=3.0)
         except Exception as exc:
             logger.warning("CHM skipped: %s", exc)
 
@@ -161,38 +197,105 @@ def main() -> None:
     print(f"  Mean planarity   : {feats.planarity.mean():.3f}")
     print(f"  Output dir       : {args.output_dir}")
 
-    # Output image
-    if chm is not None:
-        try:
-            import matplotlib.pyplot as plt
-            import numpy as np
-            from _plot_style import CMAP_CANOPY, apply_report_style, save_figure
+    # Output image — 4-panel pipeline summary
+    try:
+        import matplotlib.pyplot as plt
+        import numpy as np
+        from _plot_style import (
+            CMAP_CANOPY,
+            CMAP_ELEVATION,
+            CMAP_PROFILE,
+            apply_report_style,
+            save_figure,
+        )
 
-            apply_report_style()
-            fig, ax = plt.subplots(figsize=(10, 8))
-            im = ax.imshow(
-                chm, origin="lower", cmap=CMAP_CANOPY, extent=[xe[0], xe[-1], ye[0], ye[-1]]
+        apply_report_style()
+        xyz = ds_n.xyz
+        x_o, y_o = xyz[:, 0].min(), xyz[:, 1].min()
+
+        fig, axes = plt.subplots(2, 2, figsize=(14, 12))
+        ax_elev, ax_class, ax_chm, ax_feat = axes.flat
+
+        # (a) Raw elevation
+        sc = ax_elev.scatter(
+            xyz[:, 0] - x_o, xyz[:, 1] - y_o, c=xyz[:, 2], cmap=CMAP_ELEVATION,
+            s=0.3, alpha=0.5, rasterized=True,
+        )
+        plt.colorbar(sc, ax=ax_elev, label="Elevation (m)")
+        ax_elev.set_title("(a) Input Point Cloud — Elevation")
+        ax_elev.set_xlabel("Easting (m)")
+        ax_elev.set_ylabel("Northing (m)")
+        ax_elev.set_aspect("equal")
+
+        # (b) Ground classification
+        if isinstance(classified, AerialCloud) and classified.classification is not None:
+            cls_xyz = classified.xyz
+            cls = classified.classification
+            colors = np.where(cls == 2, 0.0, 1.0)
+            sc2 = ax_class.scatter(
+                cls_xyz[:, 0] - x_o, cls_xyz[:, 1] - y_o, c=colors, cmap="RdYlGn_r",
+                s=0.3, alpha=0.5, vmin=0, vmax=1, rasterized=True,
             )
-            plt.colorbar(im, ax=ax, label="Canopy height (m)")
-            ax.set_title(
-                "Full ALS Workflow — Canopy Height Model\n"
-                f"Points: {cloud.n_points:,}  |  Trees: {seg.n_segments if seg else 'N/A'}"
+            from matplotlib.lines import Line2D
+            legend_h = [
+                Line2D([0], [0], marker="o", color="w", markerfacecolor="#1a9641", ms=6, label="Ground"),
+                Line2D([0], [0], marker="o", color="w", markerfacecolor="#d7191c", ms=6, label="Non-ground"),
+            ]
+            ax_class.legend(handles=legend_h, loc="lower right", fontsize=8, framealpha=0.85)
+        ax_class.set_title("(b) CSF Ground Classification")
+        ax_class.set_xlabel("Easting (m)")
+        ax_class.set_ylabel("Northing (m)")
+        ax_class.set_aspect("equal")
+
+        # (c) CHM
+        if chm is not None:
+            im = ax_chm.imshow(
+                chm, origin="lower", cmap=CMAP_CANOPY,
+                extent=[xe[0] - x_o, xe[-1] - x_o, ye[0] - y_o, ye[-1] - y_o],
             )
-            ax.set_xlabel("Easting (m)")
-            ax.set_ylabel("Northing (m)")
-            img_out = args.output_dir / "full_als_chm.png"
-            save_figure(
-                fig,
-                img_out,
-                alt_text=(
-                    "Canopy height model raster from the full ALS workflow, showing tree "
-                    "canopy heights across an eastern Kentucky forested tile."
-                ),
-            )
-            logger.info("CHM image → %s", img_out)
-            plt.close()
-        except ImportError:
-            pass
+            plt.colorbar(im, ax=ax_chm, label="Canopy height (m)")
+            tree_count = seg.n_segments if seg else "N/A"
+            ax_chm.set_title(f"(c) Canopy Height Model — {tree_count} trees")
+        else:
+            ax_chm.text(0.5, 0.5, "CHM unavailable", transform=ax_chm.transAxes, ha="center")
+            ax_chm.set_title("(c) Canopy Height Model")
+        ax_chm.set_xlabel("Easting (m)")
+        ax_chm.set_ylabel("Northing (m)")
+
+        # (d) Geometric features — planarity
+        order = np.argsort(xyz[:, 0])
+        sc3 = ax_feat.scatter(
+            xyz[order, 0] - x_o, xyz[order, 2],
+            c=feats.planarity[order], cmap=CMAP_PROFILE,
+            s=0.3, alpha=0.5, vmin=0, vmax=1, rasterized=True,
+        )
+        plt.colorbar(sc3, ax=ax_feat, label="Planarity")
+        ax_feat.set_title("(d) Eigenvalue Planarity — Side View")
+        ax_feat.set_xlabel("Easting (m)")
+        ax_feat.set_ylabel("Elevation (m)")
+
+        fig.suptitle(
+            "Full ALS Processing Pipeline \u2014 USGS 3DEP\n"
+            f"n = {cloud.n_points:,} raw \u2192 {ds.n_points:,} downsampled  |  "
+            f"{n_g:,} ground  |  {seg.n_segments if seg else 'N/A'} trees",
+            fontsize=12, fontweight="bold",
+        )
+        plt.tight_layout(rect=[0, 0, 1, 0.93])
+        img_out = args.output_dir / "full_als_workflow.png"
+        save_figure(
+            fig, img_out,
+            alt_text=(
+                "Four-panel figure showing the full ALS processing pipeline: "
+                "(a) raw elevation point cloud, (b) CSF ground classification with "
+                "ground (green) and non-ground (red), (c) canopy height model raster "
+                "with tree count, (d) eigenvalue planarity side view showing vegetation "
+                "and terrain structure."
+            ),
+        )
+        logger.info("Pipeline figure → %s", img_out)
+        plt.close()
+    except ImportError:
+        pass
 
     if not args.no_viz and seg is not None:
         try:
