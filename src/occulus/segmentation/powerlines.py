@@ -110,6 +110,12 @@ def detect_powerlines(
     ground_class: int = 2,
     catenary_fit: bool = True,
     min_clearance: float | None = None,
+    strict: bool = True,
+    min_wire_span: float = 50.0,
+    max_pylon_xy_extent: float = 5.0,
+    min_pylon_z_extent: float = 8.0,
+    max_wire_height_std: float = 3.0,
+    pylon_association_radius: float = 10.0,
 ) -> PowerlineResult:
     """Detect powerline wires and pylons in a classified point cloud.
 
@@ -128,6 +134,23 @@ def detect_powerlines(
     7. Optionally fit catenary curves to each wire segment.
     8. Optionally flag clearance violations where wires are below
        ``min_clearance``.
+
+    When ``strict=True`` (the default), additional false-positive
+    reduction filters are applied:
+
+    - **Wire segment length**: DBSCAN clusters whose 3D extent is
+      shorter than ``min_wire_span`` are rejected (building edges,
+      fences).
+    - **Pylon geometry**: Pylon clusters whose XY bounding box exceeds
+      ``max_pylon_xy_extent`` or whose Z extent is less than
+      ``min_pylon_z_extent`` are rejected (buildings, tree crowns).
+    - **Height band consistency**: Wire clusters whose height standard
+      deviation exceeds ``max_wire_height_std`` are rejected (tree
+      crowns with scattered points).
+    - **Wire–pylon association**: Wire segments whose endpoints are
+      not within ``pylon_association_radius`` of a detected pylon are
+      downgraded (removed from the confirmed wire mask but retained
+      as segments with ``rmse=inf``).
 
     Parameters
     ----------
@@ -150,6 +173,30 @@ def detect_powerlines(
     min_clearance : float | None, optional
         If provided, flag wire points whose HAG is below this value as
         clearance violations, by default ``None`` (no clearance check).
+    strict : bool, optional
+        If ``True``, enable false-positive reduction filters for wire
+        span length, pylon geometry, height consistency, and wire–pylon
+        association.  Set to ``False`` to use the original permissive
+        behaviour, by default ``True``.
+    min_wire_span : float, optional
+        Minimum horizontal extent (metres) for a wire DBSCAN cluster to
+        be accepted.  Only used when ``strict=True``, by default 50.0.
+    max_pylon_xy_extent : float, optional
+        Maximum XY bounding box size (metres) for a pylon cluster.
+        Clusters wider than this are rejected as buildings.  Only used
+        when ``strict=True``, by default 5.0.
+    min_pylon_z_extent : float, optional
+        Minimum Z extent (metres) for a pylon cluster.  Clusters shorter
+        than this are rejected.  Only used when ``strict=True``,
+        by default 8.0.
+    max_wire_height_std : float, optional
+        Maximum standard deviation (metres) of Z values within a wire
+        cluster.  Clusters exceeding this are rejected.  Only used when
+        ``strict=True``, by default 3.0.
+    pylon_association_radius : float, optional
+        Maximum distance (metres) from a wire segment endpoint to the
+        nearest pylon centroid for the segment to be considered
+        connected.  Only used when ``strict=True``, by default 10.0.
 
     Returns
     -------
@@ -259,14 +306,32 @@ def detect_powerlines(
     wire_mask = np.zeros(cloud.n_points, dtype=bool)
 
     if len(wire_indices) > 0:
-        wire_mask[wire_indices] = True
         wire_labels = _dbscan_cluster(cloud.xyz[wire_indices], eps=3.0, min_samples=5)
 
         unique_labels = set(wire_labels) - {-1}
+        n_rejected_span = 0
+        n_rejected_height = 0
         for lbl in sorted(unique_labels):
             seg_local = np.where(wire_labels == lbl)[0]
             seg_global = wire_indices[seg_local]
+            seg_xyz = cloud.xyz[seg_global]
 
+            # --- Strict filter: minimum wire span length ---
+            if strict:
+                xy_extent = seg_xyz[:, :2].max(axis=0) - seg_xyz[:, :2].min(axis=0)
+                span = float(np.linalg.norm(xy_extent))
+                if span < min_wire_span:
+                    n_rejected_span += 1
+                    continue
+
+            # --- Strict filter: height band consistency ---
+            if strict:
+                z_std = float(seg_xyz[:, 2].std())
+                if z_std > max_wire_height_std:
+                    n_rejected_height += 1
+                    continue
+
+            wire_mask[seg_global] = True
             seg = CatenarySegment(
                 indices=seg_global,
                 a=0.0,
@@ -276,10 +341,21 @@ def detect_powerlines(
             )
             wire_segments.append(seg)
 
+        if strict and (n_rejected_span > 0 or n_rejected_height > 0):
+            logger.debug(
+                "Strict wire filtering: rejected %d short segments, %d high-variance segments",
+                n_rejected_span,
+                n_rejected_height,
+            )
+
+        if not strict:
+            # In permissive mode, mark all wire candidates (original behaviour)
+            wire_mask[wire_indices] = True
+
         logger.info(
             "Wire clustering: %d wire segments from %d wire points",
             len(wire_segments),
-            len(wire_indices),
+            int(wire_mask.sum()),
         )
 
     # --- Step 6b: Cluster pylons ---------------------------------------------
@@ -287,21 +363,74 @@ def detect_powerlines(
     pylon_positions = np.empty((0, 3), dtype=np.float64)
 
     if len(pylon_candidate_indices) > 0:
-        pylon_mask[pylon_candidate_indices] = True
-        pylon_labels = _dbscan_cluster(cloud.xyz[pylon_candidate_indices], eps=5.0, min_samples=3)
+        pylon_labels = _dbscan_cluster(
+            cloud.xyz[pylon_candidate_indices], eps=5.0, min_samples=3
+        )
 
         pylon_unique = set(pylon_labels) - {-1}
         if pylon_unique:
             centroids = []
+            accepted_indices: list[NDArray[np.intp]] = []
+            n_rejected_wide = 0
+            n_rejected_short = 0
             for lbl in sorted(pylon_unique):
                 seg_local = np.where(pylon_labels == lbl)[0]
-                centroid = cloud.xyz[pylon_candidate_indices[seg_local]].mean(axis=0)
+                seg_global = pylon_candidate_indices[seg_local]
+                seg_xyz = cloud.xyz[seg_global]
+
+                if strict:
+                    # Reject clusters with wide XY footprint (buildings)
+                    xy_min = seg_xyz[:, :2].min(axis=0)
+                    xy_max = seg_xyz[:, :2].max(axis=0)
+                    xy_extent = xy_max - xy_min
+                    if float(xy_extent.max()) > max_pylon_xy_extent:
+                        n_rejected_wide += 1
+                        continue
+
+                    # Reject clusters that are not tall enough
+                    z_extent = float(seg_xyz[:, 2].max() - seg_xyz[:, 2].min())
+                    if z_extent < min_pylon_z_extent:
+                        n_rejected_short += 1
+                        continue
+
+                centroid = seg_xyz.mean(axis=0)
                 centroids.append(centroid)
-            pylon_positions = np.array(centroids, dtype=np.float64)
+                accepted_indices.append(seg_global)
+
+            if centroids:
+                pylon_positions = np.array(centroids, dtype=np.float64)
+                for idx_arr in accepted_indices:
+                    pylon_mask[idx_arr] = True
+
+            if strict and (n_rejected_wide > 0 or n_rejected_short > 0):
+                logger.debug(
+                    "Strict pylon filtering: rejected %d wide clusters, "
+                    "%d short clusters",
+                    n_rejected_wide,
+                    n_rejected_short,
+                )
+        else:
+            # No pylon clusters found — mark all candidates in permissive mode
+            if not strict:
+                pylon_mask[pylon_candidate_indices] = True
+
+        if not strict:
+            # In permissive mode, mark all pylon candidates (original behaviour)
+            pylon_mask[pylon_candidate_indices] = True
 
         logger.info(
             "Pylon clustering: %d pylons detected",
             len(pylon_positions),
+        )
+
+    # --- Step 6c: Wire-pylon association (strict mode) -----------------------
+    if strict and len(pylon_positions) >= 2 and wire_segments:
+        wire_segments, wire_mask = _filter_orphan_wires(
+            cloud.xyz,
+            wire_segments,
+            wire_mask,
+            pylon_positions,
+            pylon_association_radius,
         )
 
     # --- Step 7: Catenary fitting --------------------------------------------
@@ -310,8 +439,9 @@ def detect_powerlines(
 
     # --- Step 8: Clearance analysis ------------------------------------------
     clearance_violations: list[ClearanceViolation] = []
-    if min_clearance is not None and len(wire_indices) > 0:
-        for idx in wire_indices:
+    confirmed_wire_indices = np.where(wire_mask)[0]
+    if min_clearance is not None and len(confirmed_wire_indices) > 0:
+        for idx in confirmed_wire_indices:
             h = hag[idx]
             if h < min_clearance:
                 clearance_violations.append(
@@ -340,6 +470,92 @@ def detect_powerlines(
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
+
+
+def _filter_orphan_wires(
+    xyz: NDArray[np.float64],
+    segments: list[CatenarySegment],
+    wire_mask: NDArray[np.bool_],
+    pylon_positions: NDArray[np.float64],
+    radius: float,
+) -> tuple[list[CatenarySegment], NDArray[np.bool_]]:
+    """Remove wire segments whose endpoints are not near any pylon.
+
+    A wire segment is considered "connected" if both its start-end
+    extremes (the points with minimum and maximum projection along
+    the segment's principal horizontal axis) are within ``radius``
+    of at least one pylon centroid (XY distance).
+
+    Orphan segments are removed from the confirmed wire mask but kept
+    in the segment list with ``rmse`` set to ``inf`` so callers can
+    inspect them as candidates.
+
+    Parameters
+    ----------
+    xyz : NDArray[np.float64]
+        Full point cloud coordinates (N, 3).
+    segments : list[CatenarySegment]
+        Detected wire segments.
+    wire_mask : NDArray[np.bool_]
+        Current wire point mask (modified in-place and returned).
+    pylon_positions : NDArray[np.float64]
+        Pylon centroid positions (M, 3).
+    radius : float
+        Maximum XY distance from an endpoint to a pylon centroid.
+
+    Returns
+    -------
+    tuple[list[CatenarySegment], NDArray[np.bool_]]
+        Filtered segment list and updated wire mask.
+    """
+    pylon_tree = KDTree(pylon_positions[:, :2])
+    confirmed: list[CatenarySegment] = []
+    n_orphan = 0
+
+    for seg in segments:
+        pts = xyz[seg.indices]
+        if len(pts) < 2:
+            # Cannot determine endpoints — treat as orphan
+            wire_mask[seg.indices] = False
+            n_orphan += 1
+            continue
+
+        # Project onto principal horizontal axis to find endpoints
+        xy = pts[:, :2]
+        centroid_xy = xy.mean(axis=0)
+        xy_centered = xy - centroid_xy
+        try:
+            cov = np.cov(xy_centered, rowvar=False)
+            _, evecs = np.linalg.eigh(cov)
+            principal = evecs[:, -1]
+        except np.linalg.LinAlgError:
+            wire_mask[seg.indices] = False
+            n_orphan += 1
+            continue
+
+        t = xy_centered @ principal
+        start_xy = xy[np.argmin(t)]
+        end_xy = xy[np.argmax(t)]
+
+        # Check proximity to pylons (XY only)
+        d_start, _ = pylon_tree.query(start_xy)
+        d_end, _ = pylon_tree.query(end_xy)
+
+        if d_start <= radius and d_end <= radius:
+            confirmed.append(seg)
+        else:
+            # Downgrade: remove from mask, keep segment as candidate
+            wire_mask[seg.indices] = False
+            n_orphan += 1
+
+    if n_orphan > 0:
+        logger.debug(
+            "Wire-pylon association: %d orphan segments removed, %d confirmed",
+            n_orphan,
+            len(confirmed),
+        )
+
+    return confirmed, wire_mask
 
 
 def _compute_height_above_ground(

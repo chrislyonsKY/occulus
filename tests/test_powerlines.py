@@ -14,6 +14,7 @@ from occulus.segmentation.powerlines import (
     _compute_geometric_features,
     _compute_height_above_ground,
     _dbscan_cluster,
+    _filter_orphan_wires,
 )
 from occulus.types import PointCloud
 
@@ -73,6 +74,117 @@ def _make_powerline_cloud(
     classification = np.ones(len(xyz), dtype=np.uint8)
     classification[:n_ground] = 2
 
+    return PointCloud(xyz, classification=classification)
+
+
+def _make_short_wire_cloud(
+    *,
+    wire_length: float = 20.0,
+    seed: int = 55,
+) -> PointCloud:
+    """Build a cloud with a short wire segment that strict mode should reject.
+
+    Wire spans only ``wire_length`` metres — below the default 50m threshold.
+    Includes ground and minimal pylons so the algorithm can run.
+    """
+    rng = np.random.default_rng(seed)
+    n_ground = 400
+    n_wire = 100
+
+    gx = rng.uniform(0, 50, n_ground)
+    gy = rng.uniform(0, 20, n_ground)
+    gz = rng.uniform(-0.1, 0.1, n_ground)
+    ground = np.column_stack((gx, gy, gz))
+
+    wx = np.linspace(10, 10 + wire_length, n_wire) + rng.normal(0, 0.05, n_wire)
+    wy = np.full(n_wire, 10.0) + rng.normal(0, 0.1, n_wire)
+    wz = np.full(n_wire, 10.0) + rng.normal(0, 0.05, n_wire)
+    wire = np.column_stack((wx, wy, wz))
+
+    xyz = np.vstack((ground, wire)).astype(np.float64)
+    classification = np.ones(len(xyz), dtype=np.uint8)
+    classification[:n_ground] = 2
+    return PointCloud(xyz, classification=classification)
+
+
+def _make_wide_pylon_cloud(
+    *,
+    seed: int = 66,
+) -> PointCloud:
+    """Build a cloud with a wide pylon cluster (simulating a building).
+
+    One pylon cluster has a wide XY footprint (>5m) that strict mode should
+    reject, plus a real narrow pylon for comparison.
+    """
+    rng = np.random.default_rng(seed)
+    n_ground = 500
+
+    gx = rng.uniform(0, 120, n_ground)
+    gy = rng.uniform(0, 30, n_ground)
+    gz = rng.uniform(-0.1, 0.1, n_ground)
+    ground = np.column_stack((gx, gy, gz))
+
+    # Wide "pylon" (building): 10m x 10m footprint, 12m tall
+    n_wide = 60
+    bx = rng.uniform(20, 30, n_wide)  # 10m wide
+    by = rng.uniform(5, 15, n_wide)   # 10m deep
+    bz = rng.uniform(0, 12, n_wide)
+    wide_pylon = np.column_stack((bx, by, bz))
+
+    # Narrow pylon: <5m footprint, 15m tall
+    n_narrow = 40
+    nx = np.full(n_narrow, 90.0) + rng.normal(0, 0.3, n_narrow)
+    ny = np.full(n_narrow, 15.0) + rng.normal(0, 0.3, n_narrow)
+    nz = rng.uniform(0, 15, n_narrow)
+    narrow_pylon = np.column_stack((nx, ny, nz))
+
+    # Wire connecting them (long enough to pass span filter)
+    n_wire = 200
+    wx = np.linspace(30, 90, n_wire) + rng.normal(0, 0.05, n_wire)
+    wy = np.full(n_wire, 15.0) + rng.normal(0, 0.1, n_wire)
+    wz = np.full(n_wire, 12.0) + rng.normal(0, 0.05, n_wire)
+    wire = np.column_stack((wx, wy, wz))
+
+    xyz = np.vstack((ground, wide_pylon, narrow_pylon, wire)).astype(np.float64)
+    classification = np.ones(len(xyz), dtype=np.uint8)
+    classification[:n_ground] = 2
+    return PointCloud(xyz, classification=classification)
+
+
+def _make_noisy_wire_cloud(
+    *,
+    seed: int = 77,
+) -> PointCloud:
+    """Build a cloud with a high-Z-variance wire cluster (simulating tree crown).
+
+    Wire points have Z std > 3m — strict mode should reject this cluster.
+    Also includes a clean wire for comparison.
+    """
+    rng = np.random.default_rng(seed)
+    n_ground = 500
+
+    gx = rng.uniform(0, 150, n_ground)
+    gy = rng.uniform(0, 30, n_ground)
+    gz = rng.uniform(-0.1, 0.1, n_ground)
+    ground = np.column_stack((gx, gy, gz))
+
+    # Noisy "wire" (tree crown): high Z scatter, std ~5m
+    n_noisy = 150
+    nx = np.linspace(10, 70, n_noisy) + rng.normal(0, 0.1, n_noisy)
+    ny = np.full(n_noisy, 10.0) + rng.normal(0, 0.2, n_noisy)
+    nz = np.full(n_noisy, 12.0) + rng.normal(0, 5.0, n_noisy)
+    noisy_wire = np.column_stack((nx, ny, nz))
+
+    # Clean wire: low Z scatter
+    n_clean = 200
+    cx = np.linspace(80, 140, n_clean) + rng.normal(0, 0.05, n_clean)
+    cy = np.full(n_clean, 15.0) + rng.normal(0, 0.1, n_clean)
+    cz = np.full(n_clean, 10.0) + rng.normal(0, 0.05, n_clean)
+    clean_wire = np.column_stack((cx, cy, cz))
+
+    xyz = np.vstack((ground, noisy_wire, clean_wire)).astype(np.float64)
+    classification = np.ones(len(xyz), dtype=np.uint8)
+    classification[:n_ground] = 2
     return PointCloud(xyz, classification=classification)
 
 
@@ -239,6 +351,58 @@ class TestDetectPowerlines:
         result = detect_powerlines(cloud, ground_class=6)
         assert isinstance(result, PowerlineResult)
 
+    def test_strict_false_preserves_original_behaviour(self, powerline_cloud):
+        """strict=False does not apply any new filters — all wire candidates kept."""
+        result = detect_powerlines(powerline_cloud, strict=False)
+        assert isinstance(result, PowerlineResult)
+        assert result.wire_mask.sum() > 0
+
+    def test_strict_rejects_short_wire_segments(self):
+        """Strict mode rejects wire segments shorter than min_wire_span."""
+        # Build a cloud with a short wire (20m span, below 50m default)
+        cloud = _make_short_wire_cloud(wire_length=20.0)
+        strict_result = detect_powerlines(cloud, strict=True)
+        permissive_result = detect_powerlines(cloud, strict=False)
+
+        # Strict should find fewer (or zero) wire points vs permissive
+        assert strict_result.wire_mask.sum() < permissive_result.wire_mask.sum()
+
+    def test_strict_rejects_wide_pylon_clusters(self):
+        """Strict mode rejects pylon clusters with wide XY footprint (buildings)."""
+        cloud = _make_wide_pylon_cloud()
+        strict_result = detect_powerlines(cloud, strict=True)
+        permissive_result = detect_powerlines(cloud, strict=False)
+
+        # Strict should have fewer pylons (wide cluster rejected)
+        assert len(strict_result.pylon_positions) < len(permissive_result.pylon_positions)
+
+    def test_strict_rejects_high_z_variance_wires(self):
+        """Strict mode rejects wire clusters with excessive Z variance."""
+        cloud = _make_noisy_wire_cloud()
+        strict_result = detect_powerlines(cloud, strict=True)
+        permissive_result = detect_powerlines(cloud, strict=False)
+
+        assert strict_result.wire_mask.sum() < permissive_result.wire_mask.sum()
+
+    def test_strict_custom_thresholds(self, powerline_cloud):
+        """Custom strict thresholds are respected."""
+        # Set min_wire_span very high so all wires are rejected
+        result = detect_powerlines(
+            powerline_cloud,
+            strict=True,
+            min_wire_span=200.0,
+        )
+        assert result.wire_mask.sum() == 0
+
+    def test_strict_with_catenary_fit(self, powerline_cloud):
+        """Strict mode works correctly with catenary fitting enabled."""
+        result = detect_powerlines(powerline_cloud, strict=True, catenary_fit=True)
+        assert isinstance(result, PowerlineResult)
+        # Segments that survive strict filtering get catenary fits
+        for seg in result.wire_segments:
+            # Fitted segments should have finite rmse (or inf if fit failed)
+            assert isinstance(seg.rmse, float)
+
 
 # ---------------------------------------------------------------------------
 # _compute_height_above_ground
@@ -388,3 +552,53 @@ class TestDataclasses:
         v = ClearanceViolation(point_index=42, height_above_ground=3.5, min_clearance=5.0)
         assert v.point_index == 42
         assert v.height_above_ground == 3.5
+
+
+# ---------------------------------------------------------------------------
+# _filter_orphan_wires
+# ---------------------------------------------------------------------------
+
+
+class TestFilterOrphanWires:
+    """Tests for wire-pylon association helper."""
+
+    def test_connected_segment_kept(self):
+        """Wire segment with endpoints near pylons is kept."""
+        # 100 points, wire from x=0 to x=80
+        n = 100
+        xyz = np.zeros((n, 3), dtype=np.float64)
+        xyz[:, 0] = np.linspace(0, 80, n)
+        xyz[:, 2] = 10.0
+
+        seg = CatenarySegment(
+            indices=np.arange(n, dtype=np.intp),
+            a=0.0, x0=0.0, z0=0.0, rmse=float("inf"),
+        )
+        wire_mask = np.ones(n, dtype=bool)
+        pylons = np.array([[0, 0, 10], [80, 0, 10]], dtype=np.float64)
+
+        segs_out, mask_out = _filter_orphan_wires(
+            xyz, [seg], wire_mask, pylons, radius=10.0
+        )
+        assert len(segs_out) == 1
+        assert mask_out.sum() == n
+
+    def test_orphan_segment_removed(self):
+        """Wire segment far from any pylon is removed from mask."""
+        n = 50
+        xyz = np.zeros((n, 3), dtype=np.float64)
+        xyz[:, 0] = np.linspace(100, 150, n)
+        xyz[:, 2] = 10.0
+
+        seg = CatenarySegment(
+            indices=np.arange(n, dtype=np.intp),
+            a=0.0, x0=0.0, z0=0.0, rmse=float("inf"),
+        )
+        wire_mask = np.ones(n, dtype=bool)
+        pylons = np.array([[0, 0, 10], [80, 0, 10]], dtype=np.float64)
+
+        segs_out, mask_out = _filter_orphan_wires(
+            xyz, [seg], wire_mask, pylons, radius=10.0
+        )
+        assert len(segs_out) == 0
+        assert mask_out.sum() == 0
