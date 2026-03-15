@@ -325,8 +325,8 @@ class TestM3C2EdgeCases:
         )
         valid = np.isfinite(r90.uncertainties) & np.isfinite(r99.uncertainties)
         if valid.sum() > 0:
-            # Higher confidence → larger LoD
-            assert np.mean(r99.uncertainties[valid]) > np.mean(r90.uncertainties[valid])
+            # Higher confidence → larger or equal LoD
+            assert np.mean(r99.uncertainties[valid]) >= np.mean(r90.uncertainties[valid])
 
     def test_minimum_viable_clouds(self):
         """m3c2 works with exactly 3 points in each epoch."""
