@@ -394,6 +394,15 @@ All outputs generated from **real USGS 3DEP, KY From Above, and OpenTopography L
 ### Utah Canyonlands — Colorado Plateau
 ![Utah Canyon Geology](examples/outputs/utah_canyon_geology.png)
 
+### Urban Building Detection — Chicago, IL
+![Urban Building Detection](examples/outputs/urban_building_detection.png)
+
+### Canopy Height Model — Eastern Kentucky
+![Canopy Height Model](examples/outputs/canopy_height_model.png)
+
+### Full ALS Processing Pipeline — North Carolina Piedmont
+![Full ALS Workflow](examples/outputs/full_als_workflow.png)
+
 ---
 
 ## Use cases
