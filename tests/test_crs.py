@@ -62,7 +62,7 @@ def _make_mock_transformer(
 class TestTransformCoordinates:
     """Tests for the low-level transform_coordinates function."""
 
-    @patch("occulus.crs.transform.Transformer")
+    @patch("pyproj.Transformer")
     def test_basic_transform(
         self, mock_transformer_cls: MagicMock, sample_xyz: np.ndarray
     ) -> None:
@@ -78,7 +78,7 @@ class TestTransformCoordinates:
         np.testing.assert_array_almost_equal(result[:, 1], sample_xyz[:, 1] + 2.0)
         np.testing.assert_array_equal(result[:, 2], sample_xyz[:, 2])
 
-    @patch("occulus.crs.transform.Transformer")
+    @patch("pyproj.Transformer")
     def test_same_crs_returns_copy(
         self, mock_transformer_cls: MagicMock, sample_xyz: np.ndarray
     ) -> None:
@@ -95,7 +95,7 @@ class TestTransformCoordinates:
         with pytest.raises(OcculusCRSError, match="must be an \\(N, 3\\) array"):
             transform_coordinates(bad, "EPSG:4326", "EPSG:32617")
 
-    @patch("occulus.crs.transform.Transformer")
+    @patch("pyproj.Transformer")
     def test_from_crs_failure_raises(
         self, mock_transformer_cls: MagicMock, sample_xyz: np.ndarray
     ) -> None:
@@ -105,7 +105,7 @@ class TestTransformCoordinates:
         with pytest.raises(OcculusCRSError, match="Failed to create transformer"):
             transform_coordinates(sample_xyz, "EPSG:BAD", "EPSG:WORSE")
 
-    @patch("occulus.crs.transform.Transformer")
+    @patch("pyproj.Transformer")
     def test_transform_failure_raises(
         self, mock_transformer_cls: MagicMock, sample_xyz: np.ndarray
     ) -> None:
@@ -134,7 +134,7 @@ class TestTransformCoordinates:
             with pytest.raises(OcculusCRSError, match="pyproj is required"):
                 transform_coordinates(sample_xyz, "EPSG:4326", "EPSG:32617")
 
-    @patch("occulus.crs.transform.Transformer")
+    @patch("pyproj.Transformer")
     def test_output_is_contiguous_float64(
         self, mock_transformer_cls: MagicMock, sample_xyz: np.ndarray
     ) -> None:
@@ -155,7 +155,7 @@ class TestTransformCoordinates:
 class TestReproject:
     """Tests for the high-level reproject function."""
 
-    @patch("occulus.crs.transform.Transformer")
+    @patch("pyproj.Transformer")
     def test_basic_reproject(
         self, mock_transformer_cls: MagicMock, sample_cloud: PointCloud
     ) -> None:
@@ -176,7 +176,7 @@ class TestReproject:
         # Z unchanged
         np.testing.assert_array_equal(result.xyz[:, 2], sample_cloud.xyz[:, 2])
 
-    @patch("occulus.crs.transform.Transformer")
+    @patch("pyproj.Transformer")
     def test_explicit_source_crs(
         self, mock_transformer_cls: MagicMock, sample_cloud: PointCloud
     ) -> None:
@@ -195,7 +195,7 @@ class TestReproject:
         with pytest.raises(OcculusCRSError, match="Cannot determine source CRS"):
             reproject(cloud, "EPSG:4326")
 
-    @patch("occulus.crs.transform.Transformer")
+    @patch("pyproj.Transformer")
     def test_preserves_attributes(
         self, mock_transformer_cls: MagicMock
     ) -> None:
@@ -215,7 +215,7 @@ class TestReproject:
         np.testing.assert_array_equal(result.classification, cls_arr)
         np.testing.assert_array_equal(result.rgb, rgb_arr)
 
-    @patch("occulus.crs.transform.Transformer")
+    @patch("pyproj.Transformer")
     def test_does_not_mutate_input(
         self, mock_transformer_cls: MagicMock, sample_cloud: PointCloud
     ) -> None:
@@ -229,7 +229,7 @@ class TestReproject:
         np.testing.assert_array_equal(sample_cloud.xyz, original_xyz)
         assert sample_cloud.metadata.coordinate_system == original_crs
 
-    @patch("occulus.crs.transform.Transformer")
+    @patch("pyproj.Transformer")
     def test_preserves_concrete_subtype(
         self, mock_transformer_cls: MagicMock
     ) -> None:
@@ -245,7 +245,7 @@ class TestReproject:
 
         assert isinstance(result, AerialCloud)
 
-    @patch("occulus.crs.transform.Transformer")
+    @patch("pyproj.Transformer")
     def test_preserves_other_metadata_fields(
         self, mock_transformer_cls: MagicMock
     ) -> None:

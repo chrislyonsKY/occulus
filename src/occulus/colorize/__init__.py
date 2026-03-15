@@ -79,8 +79,7 @@ def colorize_from_array(
     )
 
     # Return cloud with rgb attribute
-    result = cloud.__class__(cloud.xyz, platform=cloud.platform)
-    result.rgb = rgb
+    result = cloud.__class__(cloud.xyz, rgb=rgb, metadata=cloud.metadata)
     return result
 
 
@@ -115,7 +114,7 @@ def colorize_from_raster(
         If the raster cannot be read or has insufficient bands.
     """
     try:
-        import rasterio
+        import rasterio  # type: ignore[import-not-found]
     except ImportError as exc:
         raise OcculusValidationError(
             "Raster colorization requires rasterio: pip install occulus[raster]"

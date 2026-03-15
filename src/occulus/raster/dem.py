@@ -121,6 +121,12 @@ def _build_grid_edges(
     x_edges = np.arange(x_min, x_max + resolution, resolution)
     y_edges = np.arange(y_min, y_max + resolution, resolution)
 
+    # Guarantee at least one grid cell when all points share the same coordinate
+    if len(x_edges) < 2:
+        x_edges = np.array([x_min, x_min + resolution], dtype=np.float64)
+    if len(y_edges) < 2:
+        y_edges = np.array([y_min, y_min + resolution], dtype=np.float64)
+
     return x_edges, y_edges
 
 

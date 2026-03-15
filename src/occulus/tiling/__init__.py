@@ -210,7 +210,7 @@ def iter_tiles(
 
 def process_tiles(
     tiles: list[Tile],
-    operation: Callable,
+    operation: Callable[..., object],
     *,
     output_dir: str | Path,
     max_workers: int = 1,

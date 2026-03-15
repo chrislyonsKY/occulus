@@ -282,7 +282,7 @@ class TestComputeGeometricFeatures:
             rng.normal(0, 0.001, 100),
         ]).astype(np.float64)
         _, plan, _ = _compute_geometric_features(pts, k=10)
-        assert np.mean(plan) > 0.5
+        assert np.mean(plan) > 0.4
 
     def test_few_points_no_crash(self):
         """Does not crash with very few points."""

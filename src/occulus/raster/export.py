@@ -61,8 +61,8 @@ def export_geotiff(
         If ``rasterio`` is not installed.
     """
     try:
-        import rasterio  # type: ignore[import-untyped]
-        from rasterio.transform import from_bounds  # type: ignore[import-untyped]
+        import rasterio  # type: ignore[import-not-found]
+        from rasterio.transform import from_bounds  # type: ignore[import-not-found]
     except ImportError as exc:
         raise ImportError("rasterio is required for GeoTIFF export: pip install rasterio") from exc
 

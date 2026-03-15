@@ -17,6 +17,10 @@ import argparse
 import logging
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from occulus.types import PointCloud
 
 logger = logging.getLogger(__name__)
 
@@ -262,7 +266,7 @@ def _read_cloud(
     *,
     platform: str = "unknown",
     subsample: float | None = None,
-) -> object:
+) -> PointCloud:
     """Read a point cloud, lazily importing occulus.io.
 
     Parameters
@@ -437,7 +441,7 @@ def _cmd_dem(args: argparse.Namespace) -> int:
 
     cloud = _read_cloud(args.input, platform=args.platform, subsample=args.subsample)
 
-    xyz = cloud.xyz  # type: ignore[union-attr]
+    xyz = cloud.xyz
     res = args.resolution
 
     x_min, y_min = xyz[:, 0].min(), xyz[:, 1].min()
@@ -459,7 +463,7 @@ def _cmd_dem(args: argparse.Namespace) -> int:
         dem = xyz[idx, 2].reshape(rows, cols)
     else:
         # IDW with k nearest neighbours
-        k = min(12, cloud.n_points)  # type: ignore[union-attr]
+        k = min(12, cloud.n_points)
         dists, idx = tree.query(grid_pts, k=k, workers=-1)
         # Avoid division by zero for coincident points
         dists = np.maximum(dists, 1e-10)
@@ -504,7 +508,7 @@ def _cmd_register(args: argparse.Namespace) -> int:
     )
 
     # Apply transformation to source
-    src_xyz = source.xyz  # type: ignore[union-attr]
+    src_xyz = source.xyz
     ones = np.ones((src_xyz.shape[0], 1), dtype=np.float64)
     homo = np.hstack((src_xyz, ones))
     transformed = (result.transformation @ homo.T).T[:, :3]
@@ -540,7 +544,7 @@ def _cmd_tile(args: argparse.Namespace) -> int:
 
     cloud = _read_cloud(args.input, platform=args.platform, subsample=args.subsample)
 
-    xyz = cloud.xyz  # type: ignore[union-attr]
+    xyz = cloud.xyz
     tile_size = args.tile_size
 
     x_min, y_min = xyz[:, 0].min(), xyz[:, 1].min()

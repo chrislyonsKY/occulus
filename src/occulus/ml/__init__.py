@@ -207,7 +207,7 @@ def _predict_onnx(
 ) -> NDArray[np.float32]:
     """Run inference with ONNX Runtime."""
     try:
-        import onnxruntime as ort
+        import onnxruntime as ort  # type: ignore[import-not-found]
     except ImportError as exc:
         raise OcculusMLError(
             "ONNX inference requires onnxruntime: pip install occulus[ml]"
@@ -244,7 +244,7 @@ def _predict_torch(
 ) -> NDArray[np.float32]:
     """Run inference with PyTorch."""
     try:
-        import torch
+        import torch  # type: ignore[import-not-found]
     except ImportError as exc:
         raise OcculusMLError(
             "PyTorch inference requires torch: pip install occulus[ml-torch]"
