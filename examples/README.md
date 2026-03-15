@@ -83,6 +83,15 @@ programmatically by its script; nothing is hand-edited.
 | `dbscan_urban_objects.py` | DBSCAN clustering for urban object extraction |
 | `building_roof_planes.py` | RANSAC plane detection on building roofs |
 
+### v1.1.0 Features
+
+| Script | What it shows | Modules |
+|---|---|---|
+| `dem_rasterization.py` | DEM/DSM/DTM from classified ALS data | raster |
+| `m3c2_change_detection.py` | Multi-epoch change detection (Lague et al. 2013) | change |
+| `powerline_detection.py` | Wire + pylon detection via geometric features | segmentation.powerlines |
+| `cross_section_analysis.py` | Elevation profile extraction along polylines | analysis |
+
 ### Utilities
 
 | Script | What it shows |
@@ -106,7 +115,26 @@ python examples/scripts/forest_inventory.py --input path/to/your.laz
 
 ## Notebooks
 
-Interactive examples are in `examples/notebooks/`.
+Interactive examples in `examples/notebooks/`:
+
+| Notebook | Topic |
+|---|---|
+| `01_getting_started.ipynb` | First steps with occulus |
+| `02_kyfromabove_with_abovepy.ipynb` | KY From Above LiDAR via AbovePy |
+| `03_ground_classification.ipynb` | CSF and PMF ground classification |
+| `04_registration_workflow.ipynb` | ICP and FPFH+RANSAC registration |
+| `05_forest_inventory.ipynb` | CHM, tree segmentation, crown metrics |
+| `06_urban_analysis.ipynb` | Urban point density and building detection |
+| `07_mesh_reconstruction.ipynb` | Poisson, BPA, alpha shape meshing |
+| `08_geometric_features.ipynb` | Eigenvalue descriptors and RANSAC |
+| `09_international_data_guide.ipynb` | OpenTopography and AHN4 data access |
+| `10_change_detection.ipynb` | Multi-epoch comparison workflows |
+| `11_abovepy_advanced.ipynb` | Advanced AbovePy integration |
+| `12_complete_workflow.ipynb` | End-to-end ALS pipeline |
+| `13_crs_reprojection.ipynb` | CRS transforms and reprojection |
+| `14_tiling_large_datasets.ipynb` | Spatial tiling for large files |
+| `15_volume_computation.ipynb` | Cut/fill volume analysis |
+| `16_web_export.ipynb` | 3D Tiles and Potree export |
 Launch with:
 
 ```bash
