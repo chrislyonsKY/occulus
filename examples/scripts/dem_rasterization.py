@@ -321,7 +321,7 @@ def main() -> None:
         # ── 4-panel figure ──────────────────────────────────────────────
         logger.info("Step 5 — Generating 4-panel figure…")
 
-        fig, axes = plt.subplots(2, 2, figsize=(14, 12))
+        fig, axes = plt.subplots(2, 2, figsize=(16, 14))
         ((ax_dsm, ax_dtm), (ax_ndsm, ax_hs)) = axes
 
         # Panel (a): DSM
@@ -370,7 +370,7 @@ def main() -> None:
             interpolation="nearest",
         )
         plt.colorbar(im_ndsm, ax=ax_ndsm, label="Height above ground (m)", shrink=0.85)
-        ax_ndsm.set_title("(c) DSM \u2212 DTM — Normalized Height", fontsize=11)
+        ax_ndsm.set_title("(c) Normalized Height (DSM - DTM)", fontsize=11)
         ax_ndsm.set_xlabel("Relative Easting (m)")
         ax_ndsm.set_ylabel("Relative Northing (m)")
 
@@ -387,7 +387,7 @@ def main() -> None:
         )
         plt.colorbar(im_hs, ax=ax_hs, label="Illumination (0–255)", shrink=0.85)
         ax_hs.set_title(
-            f"(d) Hillshade of DTM — az={_HILLSHADE_AZIMUTH}\u00b0, alt={_HILLSHADE_ALTITUDE}\u00b0",
+            f"(d) Hillshade (az={_HILLSHADE_AZIMUTH}, alt={_HILLSHADE_ALTITUDE})",
             fontsize=11,
         )
         ax_hs.set_xlabel("Relative Easting (m)")
@@ -402,7 +402,7 @@ def main() -> None:
             fontsize=12,
             fontweight="bold",
         )
-        plt.tight_layout(rect=[0, 0, 1, 0.92])
+        plt.tight_layout(rect=[0, 0, 1, 0.91], h_pad=3.0, w_pad=2.0)
 
         out = OUTPUTS / "dem_rasterization.png"
         save_figure(

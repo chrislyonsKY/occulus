@@ -283,13 +283,14 @@ def main() -> None:
                 zorder=5,
                 label="Pylon centroids",
             )
-            for i, pos in enumerate(result.pylon_positions):
+            # Only label first 10 pylons to avoid clutter
+            for i, pos in enumerate(result.pylon_positions[:10]):
                 ax_plan.annotate(
                     f"P{i + 1}",
                     (pos[0] - x_o, pos[1] - y_o),
                     textcoords="offset points",
                     xytext=(8, 8),
-                    fontsize=8,
+                    fontsize=7,
                     fontweight="bold",
                 )
 
