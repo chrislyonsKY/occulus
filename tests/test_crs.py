@@ -11,7 +11,6 @@ from occulus.crs import reproject, transform_coordinates
 from occulus.exceptions import OcculusCRSError
 from occulus.types import AcquisitionMetadata, PointCloud
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -43,14 +42,10 @@ def sample_cloud(sample_xyz: np.ndarray) -> PointCloud:
     )
 
 
-def _make_mock_transformer(
-    x_offset: float = 1.0, y_offset: float = 2.0
-) -> MagicMock:
+def _make_mock_transformer(x_offset: float = 1.0, y_offset: float = 2.0) -> MagicMock:
     """Create a mock pyproj Transformer that applies a simple offset."""
     mock_transformer = MagicMock()
-    mock_transformer.transform.side_effect = (
-        lambda x, y: (x + x_offset, y + y_offset)
-    )
+    mock_transformer.transform.side_effect = lambda x, y: (x + x_offset, y + y_offset)
     return mock_transformer
 
 
@@ -63,9 +58,7 @@ class TestTransformCoordinates:
     """Tests for the low-level transform_coordinates function."""
 
     @patch("pyproj.Transformer")
-    def test_basic_transform(
-        self, mock_transformer_cls: MagicMock, sample_xyz: np.ndarray
-    ) -> None:
+    def test_basic_transform(self, mock_transformer_cls: MagicMock, sample_xyz: np.ndarray) -> None:
         """Coordinates are transformed and Z is preserved."""
         mock_transformer_cls.from_crs.return_value = _make_mock_transformer()
 
@@ -123,9 +116,7 @@ class TestTransformCoordinates:
 
         real_import = builtins.__import__
 
-        def _blocked_import(
-            name: str, *args: object, **kwargs: object
-        ) -> object:
+        def _blocked_import(name: str, *args: object, **kwargs: object) -> object:
             if name == "pyproj":
                 raise ImportError("No module named 'pyproj'")
             return real_import(name, *args, **kwargs)
@@ -167,12 +158,8 @@ class TestReproject:
         assert result.metadata.coordinate_system == "EPSG:4326"
         assert result.n_points == sample_cloud.n_points
         # XYZ should have been shifted by the mock transformer
-        np.testing.assert_array_almost_equal(
-            result.xyz[:, 0], sample_cloud.xyz[:, 0] + 1.0
-        )
-        np.testing.assert_array_almost_equal(
-            result.xyz[:, 1], sample_cloud.xyz[:, 1] + 2.0
-        )
+        np.testing.assert_array_almost_equal(result.xyz[:, 0], sample_cloud.xyz[:, 0] + 1.0)
+        np.testing.assert_array_almost_equal(result.xyz[:, 1], sample_cloud.xyz[:, 1] + 2.0)
         # Z unchanged
         np.testing.assert_array_equal(result.xyz[:, 2], sample_cloud.xyz[:, 2])
 
@@ -196,9 +183,7 @@ class TestReproject:
             reproject(cloud, "EPSG:4326")
 
     @patch("pyproj.Transformer")
-    def test_preserves_attributes(
-        self, mock_transformer_cls: MagicMock
-    ) -> None:
+    def test_preserves_attributes(self, mock_transformer_cls: MagicMock) -> None:
         """Per-point attributes are carried through to the result."""
         mock_transformer_cls.from_crs.return_value = _make_mock_transformer()
 
@@ -206,9 +191,7 @@ class TestReproject:
         cls_arr = np.array([2, 6], dtype=np.uint8)
         rgb_arr = np.array([[255, 0, 0], [0, 255, 0]], dtype=np.uint8)
         meta = AcquisitionMetadata(coordinate_system="EPSG:32617")
-        cloud = PointCloud(
-            xyz, classification=cls_arr, rgb=rgb_arr, metadata=meta
-        )
+        cloud = PointCloud(xyz, classification=cls_arr, rgb=rgb_arr, metadata=meta)
 
         result = reproject(cloud, "EPSG:4326")
 
@@ -230,9 +213,7 @@ class TestReproject:
         assert sample_cloud.metadata.coordinate_system == original_crs
 
     @patch("pyproj.Transformer")
-    def test_preserves_concrete_subtype(
-        self, mock_transformer_cls: MagicMock
-    ) -> None:
+    def test_preserves_concrete_subtype(self, mock_transformer_cls: MagicMock) -> None:
         """Reprojecting an AerialCloud returns an AerialCloud."""
         from occulus.types import AerialCloud
 
@@ -246,9 +227,7 @@ class TestReproject:
         assert isinstance(result, AerialCloud)
 
     @patch("pyproj.Transformer")
-    def test_preserves_other_metadata_fields(
-        self, mock_transformer_cls: MagicMock
-    ) -> None:
+    def test_preserves_other_metadata_fields(self, mock_transformer_cls: MagicMock) -> None:
         """Non-CRS metadata fields survive reprojection."""
         mock_transformer_cls.from_crs.return_value = _make_mock_transformer()
         meta = AcquisitionMetadata(

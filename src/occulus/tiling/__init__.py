@@ -13,9 +13,8 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
-from numpy.typing import NDArray
 
-from occulus.exceptions import OcculusIOError, OcculusValidationError
+from occulus.exceptions import OcculusValidationError
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +47,7 @@ def tile_point_cloud(
     *,
     tile_size: float = 500.0,
     overlap: float = 0.0,
-    format: str = "xyz",
+    output_format: str = "xyz",
 ) -> list[Tile]:
     """Split a point cloud into spatial grid tiles.
 
@@ -127,14 +126,14 @@ def tile_point_cloud(
             if n_pts == 0:
                 continue
 
-            tile_name = f"tile_{col:04d}_{row:04d}.{format}"
+            tile_name = f"tile_{col:04d}_{row:04d}.{output_format}"
             tile_path = output_dir / tile_name
 
             # Write tile
             from occulus.io import write
-            from occulus.types import PointCloud as PC
+            from occulus.types import PointCloud
 
-            tile_cloud = PC(xyz[mask])
+            tile_cloud = PointCloud(xyz[mask])
             write(tile_cloud, tile_path)
 
             tile = Tile(
@@ -182,7 +181,7 @@ def iter_tiles(
     n_cols = max(1, int(np.ceil((x_max - x_min) / tile_size)))
     n_rows = max(1, int(np.ceil((y_max - y_min) / tile_size)))
 
-    from occulus.types import PointCloud as PC
+    from occulus.types import PointCloud
 
     for col in range(n_cols):
         for row in range(n_rows):
@@ -205,7 +204,7 @@ def iter_tiles(
                 bounds=(tx_min, ty_min, tx_max, ty_max),
                 point_count=int(mask.sum()),
             )
-            yield tile, PC(xyz[mask])
+            yield tile, PointCloud(xyz[mask])
 
 
 def process_tiles(
@@ -249,7 +248,7 @@ def process_tiles(
         processed = operation(cloud)
 
         out_path = output_dir / tile.path.name
-        write(processed, out_path)
+        write(processed, out_path)  # type: ignore[arg-type]
         results.append(out_path)
 
     logger.info("Processed %d tiles", len(results))

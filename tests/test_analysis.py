@@ -15,7 +15,6 @@ from occulus.analysis import (
 from occulus.exceptions import OcculusValidationError
 from occulus.types import PointCloud
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -269,12 +268,14 @@ class TestExtractCrossSection:
 
     def test_multivertex_polyline(self, corridor_cloud):
         """Works with a polyline having more than two vertices."""
-        polyline = np.array([
-            [0.0, 0.0],
-            [30.0, 0.0],
-            [60.0, 2.0],
-            [100.0, 0.0],
-        ])
+        polyline = np.array(
+            [
+                [0.0, 0.0],
+                [30.0, 0.0],
+                [60.0, 2.0],
+                [100.0, 0.0],
+            ]
+        )
         cs = extract_cross_section(corridor_cloud, polyline, width=5.0, resolution=1.0)
         assert isinstance(cs, CrossSection)
         assert len(cs.station) > 0
@@ -333,9 +334,7 @@ class TestExtractProfiles:
     def test_number_of_profiles(self, corridor_cloud):
         """Number of profiles matches expected count from interval."""
         polyline = np.array([[0.0, 0.0], [100.0, 0.0]])
-        profiles = extract_profiles(
-            corridor_cloud, polyline, interval=25.0, width=5.0
-        )
+        profiles = extract_profiles(corridor_cloud, polyline, interval=25.0, width=5.0)
         # Expected: stations at 0, 25, 50, 75, 100 => 5 profiles
         assert len(profiles) == 5
 

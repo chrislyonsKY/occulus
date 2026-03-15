@@ -346,10 +346,7 @@ def _cmd_classify(args: argparse.Namespace) -> int:
 
     cloud = _read_cloud(args.input, platform=args.platform, subsample=args.subsample)
 
-    if args.algorithm == "csf":
-        result = classify_ground_csf(cloud)  # type: ignore[arg-type]
-    else:
-        result = classify_ground_pmf(cloud)  # type: ignore[arg-type]
+    result = classify_ground_csf(cloud) if args.algorithm == "csf" else classify_ground_pmf(cloud)  # type: ignore[arg-type]
 
     write(result, args.output)
     return 0

@@ -74,9 +74,7 @@ class TestM3C2ReturnType:
         assert result.core_points.shape == (n, 3)
         assert result.significant_change.shape == (n,)
 
-    def test_output_shapes_custom_core(
-        self, flat_epoch1, flat_epoch2_shifted, sparse_core_points
-    ):
+    def test_output_shapes_custom_core(self, flat_epoch1, flat_epoch2_shifted, sparse_core_points):
         """When core_points are provided, output arrays match their count."""
         result = m3c2(
             flat_epoch1,
@@ -140,9 +138,7 @@ class TestM3C2Distances:
         valid = np.isfinite(result.distances)
         if valid.sum() > 0:
             sig_ratio = result.significant_change[valid].mean()
-            assert sig_ratio > 0.5, (
-                f"Expected most points significant, got ratio {sig_ratio}"
-            )
+            assert sig_ratio > 0.5, f"Expected most points significant, got ratio {sig_ratio}"
 
     def test_no_significant_change_when_identical(self, flat_epoch1, flat_epoch2_same):
         """When epochs are identical, few or no points should be significant."""
@@ -200,18 +196,26 @@ class TestM3C2Uncertainty:
     def test_registration_error_increases_lod(self, flat_epoch1, flat_epoch2_same):
         """Adding registration error should increase LoD values."""
         result_no_err = m3c2(
-            flat_epoch1, flat_epoch2_same,
-            normal_scale=2.0, projection_scale=2.0, registration_error=0.0,
+            flat_epoch1,
+            flat_epoch2_same,
+            normal_scale=2.0,
+            projection_scale=2.0,
+            registration_error=0.0,
         )
         result_with_err = m3c2(
-            flat_epoch1, flat_epoch2_same,
-            normal_scale=2.0, projection_scale=2.0, registration_error=0.1,
+            flat_epoch1,
+            flat_epoch2_same,
+            normal_scale=2.0,
+            projection_scale=2.0,
+            registration_error=0.1,
         )
         valid = np.isfinite(result_no_err.uncertainties) & np.isfinite(
             result_with_err.uncertainties
         )
         if valid.sum() > 0:
-            assert np.all(result_with_err.uncertainties[valid] >= result_no_err.uncertainties[valid])
+            assert np.all(
+                result_with_err.uncertainties[valid] >= result_no_err.uncertainties[valid]
+            )
 
 
 # ---------------------------------------------------------------------------
@@ -306,12 +310,18 @@ class TestM3C2EdgeCases:
     def test_custom_confidence(self, flat_epoch1, flat_epoch2_shifted):
         """Different confidence levels produce different LoD values."""
         r90 = m3c2(
-            flat_epoch1, flat_epoch2_shifted,
-            normal_scale=2.0, projection_scale=2.0, confidence=0.90,
+            flat_epoch1,
+            flat_epoch2_shifted,
+            normal_scale=2.0,
+            projection_scale=2.0,
+            confidence=0.90,
         )
         r99 = m3c2(
-            flat_epoch1, flat_epoch2_shifted,
-            normal_scale=2.0, projection_scale=2.0, confidence=0.99,
+            flat_epoch1,
+            flat_epoch2_shifted,
+            normal_scale=2.0,
+            projection_scale=2.0,
+            confidence=0.99,
         )
         valid = np.isfinite(r90.uncertainties) & np.isfinite(r99.uncertainties)
         if valid.sum() > 0:

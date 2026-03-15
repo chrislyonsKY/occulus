@@ -19,12 +19,10 @@ from occulus.raster import (
     create_dem,
     create_dsm,
     create_dtm,
-    export_geotiff,
     idw_interpolate,
     nearest_interpolate,
 )
 from occulus.types import AcquisitionMetadata, PointCloud
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -59,10 +57,12 @@ def classified_cloud() -> PointCloud:
     veg_xyz = np.column_stack((veg_xy, veg_z))
 
     xyz = np.vstack((ground_xyz, veg_xyz))
-    classification = np.concatenate([
-        np.full(n_ground, 2, dtype=np.uint8),
-        np.full(n_veg, 1, dtype=np.uint8),
-    ])
+    classification = np.concatenate(
+        [
+            np.full(n_ground, 2, dtype=np.uint8),
+            np.full(n_veg, 1, dtype=np.uint8),
+        ]
+    )
 
     return PointCloud(xyz, classification=classification)
 
@@ -70,13 +70,16 @@ def classified_cloud() -> PointCloud:
 @pytest.fixture()
 def source_points() -> tuple[NDArray[np.float64], NDArray[np.float64]]:
     """Simple XY + Z arrays for interpolation tests."""
-    xy = np.array([
-        [0.0, 0.0],
-        [10.0, 0.0],
-        [0.0, 10.0],
-        [10.0, 10.0],
-        [5.0, 5.0],
-    ], dtype=np.float64)
+    xy = np.array(
+        [
+            [0.0, 0.0],
+            [10.0, 0.0],
+            [0.0, 10.0],
+            [10.0, 10.0],
+            [5.0, 5.0],
+        ],
+        dtype=np.float64,
+    )
     z = np.array([1.0, 2.0, 3.0, 4.0, 2.5], dtype=np.float64)
     return xy, z
 
@@ -224,11 +227,14 @@ class TestCreateDSM:
     def test_dsm_captures_max_z(self) -> None:
         """DSM should reflect the maximum Z in each cell."""
         # Two points in the same cell, different Z
-        xyz = np.array([
-            [1.0, 1.0, 5.0],
-            [1.0, 1.0, 10.0],
-            [1.0, 1.0, 3.0],
-        ], dtype=np.float64)
+        xyz = np.array(
+            [
+                [1.0, 1.0, 5.0],
+                [1.0, 1.0, 10.0],
+                [1.0, 1.0, 3.0],
+            ],
+            dtype=np.float64,
+        )
         cloud = PointCloud(xyz)
         result = create_dsm(cloud, resolution=5.0)
         # The cell containing (1,1) should have max Z = 10
@@ -306,11 +312,14 @@ class TestCreateDTM:
 
     def test_custom_ground_class(self) -> None:
         """DTM accepts a custom ground class code."""
-        xyz = np.array([
-            [0.0, 0.0, 10.0],
-            [5.0, 5.0, 12.0],
-            [10.0, 10.0, 50.0],
-        ], dtype=np.float64)
+        xyz = np.array(
+            [
+                [0.0, 0.0, 10.0],
+                [5.0, 5.0, 12.0],
+                [10.0, 10.0, 50.0],
+            ],
+            dtype=np.float64,
+        )
         cls = np.array([8, 8, 1], dtype=np.uint8)
         cloud = PointCloud(xyz, classification=cls)
         result = create_dtm(cloud, resolution=5.0, ground_class=8)
@@ -409,6 +418,7 @@ class TestExportGeotiff:
             import importlib
 
             import occulus.raster.export
+
             importlib.reload(occulus.raster.export)
 
             result = occulus.raster.export.export_geotiff(raster, out_file)
@@ -424,6 +434,7 @@ class TestExportGeotiff:
             import importlib
 
             import occulus.raster.export
+
             importlib.reload(occulus.raster.export)
 
             with pytest.raises(ImportError, match="rasterio"):
@@ -448,6 +459,7 @@ class TestExportGeotiff:
             import importlib
 
             import occulus.raster.export
+
             importlib.reload(occulus.raster.export)
 
             with pytest.raises(OcculusRasterError, match="2D"):
@@ -468,6 +480,7 @@ class TestExportGeotiff:
             import importlib
 
             import occulus.raster.export
+
             importlib.reload(occulus.raster.export)
 
             with pytest.raises(OcculusExportError, match="Parent directory"):

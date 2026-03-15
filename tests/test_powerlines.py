@@ -52,15 +52,19 @@ def _make_powerline_cloud(
     wire = np.column_stack((wx, wy, wz))
 
     # Pylons: vertical columns at x=10 and x=90
-    px = np.concatenate([
-        np.full(n_pylon // 2, 10.0) + rng.normal(0, 0.3, n_pylon // 2),
-        np.full(n_pylon // 2, 90.0) + rng.normal(0, 0.3, n_pylon // 2),
-    ])
+    px = np.concatenate(
+        [
+            np.full(n_pylon // 2, 10.0) + rng.normal(0, 0.3, n_pylon // 2),
+            np.full(n_pylon // 2, 90.0) + rng.normal(0, 0.3, n_pylon // 2),
+        ]
+    )
     py = np.full(n_pylon, 10.0) + rng.normal(0, 0.3, n_pylon)
-    pz = np.concatenate([
-        rng.uniform(0, pylon_height, n_pylon // 2),
-        rng.uniform(0, pylon_height, n_pylon // 2),
-    ])
+    pz = np.concatenate(
+        [
+            rng.uniform(0, pylon_height, n_pylon // 2),
+            rng.uniform(0, pylon_height, n_pylon // 2),
+        ]
+    )
     pylon = np.column_stack((px, py, pz))
 
     xyz = np.vstack((ground, wire, pylon)).astype(np.float64)
@@ -213,16 +217,20 @@ class TestDetectPowerlines:
         # Ground at class 6 instead of 2
         n_ground = 300
         n_above = 200
-        ground = np.column_stack([
-            rng.uniform(0, 50, n_ground),
-            rng.uniform(0, 20, n_ground),
-            rng.uniform(-0.1, 0.1, n_ground),
-        ])
-        above = np.column_stack([
-            np.linspace(5, 45, n_above) + rng.normal(0, 0.05, n_above),
-            np.full(n_above, 10.0) + rng.normal(0, 0.1, n_above),
-            np.full(n_above, 8.0) + rng.normal(0, 0.05, n_above),
-        ])
+        ground = np.column_stack(
+            [
+                rng.uniform(0, 50, n_ground),
+                rng.uniform(0, 20, n_ground),
+                rng.uniform(-0.1, 0.1, n_ground),
+            ]
+        )
+        above = np.column_stack(
+            [
+                np.linspace(5, 45, n_above) + rng.normal(0, 0.05, n_above),
+                np.full(n_above, 10.0) + rng.normal(0, 0.1, n_above),
+                np.full(n_above, 8.0) + rng.normal(0, 0.05, n_above),
+            ]
+        )
         xyz = np.vstack((ground, above)).astype(np.float64)
         classification = np.ones(len(xyz), dtype=np.uint8)
         classification[:n_ground] = 6
@@ -242,16 +250,14 @@ class TestComputeHeightAboveGround:
 
     def test_flat_ground_returns_z(self):
         """On a flat ground at z=0, HAG equals the point's z coordinate."""
-        ground = np.array([[0, 0, 0], [10, 0, 0], [0, 10, 0], [10, 10, 0]],
-                          dtype=np.float64)
+        ground = np.array([[0, 0, 0], [10, 0, 0], [0, 10, 0], [10, 10, 0]], dtype=np.float64)
         pts = np.array([[5, 5, 7], [2, 2, 3]], dtype=np.float64)
         hag = _compute_height_above_ground(pts, ground)
         np.testing.assert_allclose(hag, [7.0, 3.0], atol=0.01)
 
     def test_ground_points_have_zero_hag(self):
         """Ground points themselves should have HAG ~ 0."""
-        ground = np.array([[0, 0, 0], [10, 0, 0], [0, 10, 0], [10, 10, 0]],
-                          dtype=np.float64)
+        ground = np.array([[0, 0, 0], [10, 0, 0], [0, 10, 0], [10, 10, 0]], dtype=np.float64)
         hag = _compute_height_above_ground(ground, ground)
         np.testing.assert_allclose(hag, 0.0, atol=0.01)
 
@@ -276,11 +282,13 @@ class TestComputeGeometricFeatures:
     def test_planar_points_have_high_planarity(self):
         """Points on a flat plane should have high planarity."""
         rng = np.random.default_rng(1)
-        pts = np.column_stack([
-            rng.uniform(0, 10, 100),
-            rng.uniform(0, 10, 100),
-            rng.normal(0, 0.001, 100),
-        ]).astype(np.float64)
+        pts = np.column_stack(
+            [
+                rng.uniform(0, 10, 100),
+                rng.uniform(0, 10, 100),
+                rng.normal(0, 0.001, 100),
+            ]
+        ).astype(np.float64)
         _, plan, _ = _compute_geometric_features(pts, k=10)
         assert np.mean(plan) > 0.4
 

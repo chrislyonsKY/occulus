@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import numpy as np
 import pytest
 
 from occulus.cli.main import _build_parser, main
 from occulus.types import PointCloud
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -68,9 +67,16 @@ class TestParser:
     def test_classify_args(self):
         """classify subcommand should parse input, output, and algorithm."""
         parser = _build_parser()
-        args = parser.parse_args([
-            "classify", "in.laz", "-o", "out.laz", "--algorithm", "pmf",
-        ])
+        args = parser.parse_args(
+            [
+                "classify",
+                "in.laz",
+                "-o",
+                "out.laz",
+                "--algorithm",
+                "pmf",
+            ]
+        )
         assert args.command == "classify"
         assert args.input == "in.laz"
         assert args.output == "out.laz"
@@ -79,10 +85,18 @@ class TestParser:
     def test_filter_args_voxel(self):
         """filter subcommand should parse voxel method with voxel-size."""
         parser = _build_parser()
-        args = parser.parse_args([
-            "filter", "in.laz", "-o", "out.laz",
-            "--method", "voxel", "--voxel-size", "0.5",
-        ])
+        args = parser.parse_args(
+            [
+                "filter",
+                "in.laz",
+                "-o",
+                "out.laz",
+                "--method",
+                "voxel",
+                "--voxel-size",
+                "0.5",
+            ]
+        )
         assert args.command == "filter"
         assert args.method == "voxel"
         assert args.voxel_size == 0.5
@@ -90,10 +104,20 @@ class TestParser:
     def test_filter_args_sor(self):
         """filter subcommand should parse SOR method with parameters."""
         parser = _build_parser()
-        args = parser.parse_args([
-            "filter", "in.laz", "-o", "out.laz",
-            "--method", "sor", "--nb-neighbors", "30", "--std-ratio", "1.5",
-        ])
+        args = parser.parse_args(
+            [
+                "filter",
+                "in.laz",
+                "-o",
+                "out.laz",
+                "--method",
+                "sor",
+                "--nb-neighbors",
+                "30",
+                "--std-ratio",
+                "1.5",
+            ]
+        )
         assert args.method == "sor"
         assert args.nb_neighbors == 30
         assert args.std_ratio == 1.5
@@ -101,10 +125,20 @@ class TestParser:
     def test_filter_args_radius(self):
         """filter subcommand should parse radius method with parameters."""
         parser = _build_parser()
-        args = parser.parse_args([
-            "filter", "in.laz", "-o", "out.laz",
-            "--method", "radius", "--radius", "1.0", "--min-neighbors", "5",
-        ])
+        args = parser.parse_args(
+            [
+                "filter",
+                "in.laz",
+                "-o",
+                "out.laz",
+                "--method",
+                "radius",
+                "--radius",
+                "1.0",
+                "--min-neighbors",
+                "5",
+            ]
+        )
         assert args.method == "radius"
         assert args.radius == 1.0
         assert args.min_neighbors == 5
@@ -120,10 +154,18 @@ class TestParser:
     def test_dem_args(self):
         """dem subcommand should parse resolution and method."""
         parser = _build_parser()
-        args = parser.parse_args([
-            "dem", "in.laz", "-o", "dem.npy",
-            "--resolution", "2.0", "--method", "nearest",
-        ])
+        args = parser.parse_args(
+            [
+                "dem",
+                "in.laz",
+                "-o",
+                "dem.npy",
+                "--resolution",
+                "2.0",
+                "--method",
+                "nearest",
+            ]
+        )
         assert args.command == "dem"
         assert args.resolution == 2.0
         assert args.method == "nearest"
@@ -131,10 +173,19 @@ class TestParser:
     def test_register_args(self):
         """register subcommand should parse source, target, and ICP params."""
         parser = _build_parser()
-        args = parser.parse_args([
-            "register", "src.laz", "tgt.laz", "-o", "aligned.laz",
-            "--max-iterations", "100", "--tolerance", "1e-8",
-        ])
+        args = parser.parse_args(
+            [
+                "register",
+                "src.laz",
+                "tgt.laz",
+                "-o",
+                "aligned.laz",
+                "--max-iterations",
+                "100",
+                "--tolerance",
+                "1e-8",
+            ]
+        )
         assert args.command == "register"
         assert args.source == "src.laz"
         assert args.target == "tgt.laz"
@@ -144,9 +195,16 @@ class TestParser:
     def test_tile_args(self):
         """tile subcommand should parse tile-size."""
         parser = _build_parser()
-        args = parser.parse_args([
-            "tile", "in.laz", "-o", "tiles/", "--tile-size", "50.0",
-        ])
+        args = parser.parse_args(
+            [
+                "tile",
+                "in.laz",
+                "-o",
+                "tiles/",
+                "--tile-size",
+                "50.0",
+            ]
+        )
         assert args.command == "tile"
         assert args.tile_size == 50.0
 
@@ -201,9 +259,16 @@ class TestCmdInfo:
         rng = np.random.default_rng(7)
         cloud = PointCloud(rng.random((50, 3)).astype(np.float64))
         with patch("occulus.cli.main._read_cloud", return_value=cloud):
-            monkeypatch.setattr("sys.argv", [
-                "occulus", "info", "fake.xyz", "--platform", "aerial",
-            ])
+            monkeypatch.setattr(
+                "sys.argv",
+                [
+                    "occulus",
+                    "info",
+                    "fake.xyz",
+                    "--platform",
+                    "aerial",
+                ],
+            )
             code = main()
         assert code == 0
 
@@ -218,13 +283,22 @@ class TestCmdClassify:
 
     def test_classify_csf(self, monkeypatch, small_cloud):
         """classify --algorithm csf should call classify_ground_csf."""
-        monkeypatch.setattr("sys.argv", [
-            "occulus", "classify", "in.xyz", "-o", "out.xyz", "--algorithm", "csf",
-        ])
+        monkeypatch.setattr(
+            "sys.argv",
+            [
+                "occulus",
+                "classify",
+                "in.xyz",
+                "-o",
+                "out.xyz",
+                "--algorithm",
+                "csf",
+            ],
+        )
         with (
             patch("occulus.cli.main._read_cloud", return_value=small_cloud),
-            patch("occulus.segmentation.classify_ground_csf", return_value=small_cloud) as mock_csf,
-            patch("occulus.cli.main.write", return_value="out.xyz") as mock_write,
+            patch("occulus.segmentation.classify_ground_csf", return_value=small_cloud),
+            patch("occulus.cli.main.write", return_value="out.xyz"),
         ):
             # Patch the lazy import within the function
             with patch.dict("sys.modules", {}):
@@ -234,9 +308,18 @@ class TestCmdClassify:
 
     def test_classify_pmf(self, monkeypatch, small_cloud):
         """classify --algorithm pmf should call classify_ground_pmf."""
-        monkeypatch.setattr("sys.argv", [
-            "occulus", "classify", "in.xyz", "-o", "out.xyz", "--algorithm", "pmf",
-        ])
+        monkeypatch.setattr(
+            "sys.argv",
+            [
+                "occulus",
+                "classify",
+                "in.xyz",
+                "-o",
+                "out.xyz",
+                "--algorithm",
+                "pmf",
+            ],
+        )
         with (
             patch("occulus.cli.main._read_cloud", return_value=small_cloud),
             patch(
@@ -264,10 +347,20 @@ class TestCmdFilter:
 
     def test_filter_voxel(self, monkeypatch, small_cloud):
         """filter --method voxel should call voxel_downsample."""
-        monkeypatch.setattr("sys.argv", [
-            "occulus", "filter", "in.xyz", "-o", "out.xyz",
-            "--method", "voxel", "--voxel-size", "0.5",
-        ])
+        monkeypatch.setattr(
+            "sys.argv",
+            [
+                "occulus",
+                "filter",
+                "in.xyz",
+                "-o",
+                "out.xyz",
+                "--method",
+                "voxel",
+                "--voxel-size",
+                "0.5",
+            ],
+        )
         downsampled = PointCloud(small_cloud.xyz[:20])
         with (
             patch("occulus.cli.main._read_cloud", return_value=small_cloud),
@@ -283,9 +376,18 @@ class TestCmdFilter:
 
     def test_filter_sor(self, monkeypatch, small_cloud):
         """filter --method sor should call statistical_outlier_removal."""
-        monkeypatch.setattr("sys.argv", [
-            "occulus", "filter", "in.xyz", "-o", "out.xyz", "--method", "sor",
-        ])
+        monkeypatch.setattr(
+            "sys.argv",
+            [
+                "occulus",
+                "filter",
+                "in.xyz",
+                "-o",
+                "out.xyz",
+                "--method",
+                "sor",
+            ],
+        )
         inlier_mask = np.ones(small_cloud.n_points, dtype=bool)
         with (
             patch("occulus.cli.main._read_cloud", return_value=small_cloud),
@@ -301,9 +403,18 @@ class TestCmdFilter:
 
     def test_filter_radius(self, monkeypatch, small_cloud):
         """filter --method radius should call radius_outlier_removal."""
-        monkeypatch.setattr("sys.argv", [
-            "occulus", "filter", "in.xyz", "-o", "out.xyz", "--method", "radius",
-        ])
+        monkeypatch.setattr(
+            "sys.argv",
+            [
+                "occulus",
+                "filter",
+                "in.xyz",
+                "-o",
+                "out.xyz",
+                "--method",
+                "radius",
+            ],
+        )
         inlier_mask = np.ones(small_cloud.n_points, dtype=bool)
         with (
             patch("occulus.cli.main._read_cloud", return_value=small_cloud),
@@ -328,9 +439,16 @@ class TestCmdConvert:
 
     def test_convert_runs(self, monkeypatch, capsys, small_cloud):
         """convert should read, then write to the output path."""
-        monkeypatch.setattr("sys.argv", [
-            "occulus", "convert", "in.xyz", "-o", "out.ply",
-        ])
+        monkeypatch.setattr(
+            "sys.argv",
+            [
+                "occulus",
+                "convert",
+                "in.xyz",
+                "-o",
+                "out.ply",
+            ],
+        )
         with (
             patch("occulus.cli.main._read_cloud", return_value=small_cloud),
             patch("occulus.io.writers.write", return_value="out.ply"),
@@ -353,10 +471,20 @@ class TestCmdDem:
     def test_dem_idw(self, monkeypatch, capsys, small_cloud, tmp_path):
         """dem --method idw should produce a .npy file."""
         out_file = str(tmp_path / "dem.npy")
-        monkeypatch.setattr("sys.argv", [
-            "occulus", "dem", "in.xyz", "-o", out_file,
-            "--resolution", "0.5", "--method", "idw",
-        ])
+        monkeypatch.setattr(
+            "sys.argv",
+            [
+                "occulus",
+                "dem",
+                "in.xyz",
+                "-o",
+                out_file,
+                "--resolution",
+                "0.5",
+                "--method",
+                "idw",
+            ],
+        )
         with patch("occulus.cli.main._read_cloud", return_value=small_cloud):
             code = main()
 
@@ -366,10 +494,20 @@ class TestCmdDem:
     def test_dem_nearest(self, monkeypatch, capsys, small_cloud, tmp_path):
         """dem --method nearest should produce a .npy file."""
         out_file = str(tmp_path / "dem.npy")
-        monkeypatch.setattr("sys.argv", [
-            "occulus", "dem", "in.xyz", "-o", out_file,
-            "--resolution", "0.5", "--method", "nearest",
-        ])
+        monkeypatch.setattr(
+            "sys.argv",
+            [
+                "occulus",
+                "dem",
+                "in.xyz",
+                "-o",
+                out_file,
+                "--resolution",
+                "0.5",
+                "--method",
+                "nearest",
+            ],
+        )
         with patch("occulus.cli.main._read_cloud", return_value=small_cloud):
             code = main()
 
@@ -391,9 +529,17 @@ class TestCmdRegister:
         from occulus.registration.icp import RegistrationResult
 
         out_file = str(tmp_path / "aligned.xyz")
-        monkeypatch.setattr("sys.argv", [
-            "occulus", "register", "src.xyz", "tgt.xyz", "-o", out_file,
-        ])
+        monkeypatch.setattr(
+            "sys.argv",
+            [
+                "occulus",
+                "register",
+                "src.xyz",
+                "tgt.xyz",
+                "-o",
+                out_file,
+            ],
+        )
 
         mock_result = RegistrationResult(
             transformation=np.eye(4),
@@ -434,9 +580,18 @@ class TestCmdTile:
     def test_tile_creates_tiles(self, monkeypatch, capsys, small_cloud, tmp_path):
         """tile should create tile files in the output directory."""
         out_dir = str(tmp_path / "tiles")
-        monkeypatch.setattr("sys.argv", [
-            "occulus", "tile", "in.xyz", "-o", out_dir, "--tile-size", "0.5",
-        ])
+        monkeypatch.setattr(
+            "sys.argv",
+            [
+                "occulus",
+                "tile",
+                "in.xyz",
+                "-o",
+                out_dir,
+                "--tile-size",
+                "0.5",
+            ],
+        )
         with (
             patch("occulus.cli.main._read_cloud", return_value=small_cloud),
             patch("occulus.io.writers.write", return_value="tile.xyz"),
