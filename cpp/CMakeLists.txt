@@ -5,7 +5,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-# Find pybind11 — prefer pip-installed version
+# Use modern FindPython (required for Python 3.13+)
+set(PYBIND11_FINDPYTHON ON)
 find_package(pybind11 CONFIG REQUIRED)
 
 # Core library (shared across all bindings)

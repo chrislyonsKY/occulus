@@ -11,6 +11,14 @@
 
 namespace py = pybind11;
 
+// std::vector<bool> is a bitfield — no .data(). Copy to uint8_t array.
+static py::array_t<bool> bool_vec_to_array(const std::vector<bool>& v) {
+    py::array_t<bool> arr(v.size());
+    auto ptr = arr.mutable_data();
+    for (size_t i = 0; i < v.size(); ++i) ptr[i] = v[i];
+    return arr;
+}
+
 // --------------------------------------------------------------------------
 // kdtree submodule
 // --------------------------------------------------------------------------
@@ -74,7 +82,7 @@ void bind_filters(py::module_& m) {
                 static_cast<const double*>(buf.ptr),
                 static_cast<size_t>(buf.shape[0]),
                 nb_neighbors, std_ratio);
-            return py::array_t<bool>(mask.size(), mask.data());
+            return bool_vec_to_array(mask);
         }, py::arg("points"), py::arg("nb_neighbors"), py::arg("std_ratio"),
         "Statistical outlier removal. Returns boolean inlier mask.");
 
@@ -87,7 +95,7 @@ void bind_filters(py::module_& m) {
                 static_cast<const double*>(buf.ptr),
                 static_cast<size_t>(buf.shape[0]),
                 radius, min_neighbors);
-            return py::array_t<bool>(mask.size(), mask.data());
+            return bool_vec_to_array(mask);
         }, py::arg("points"), py::arg("radius"), py::arg("min_neighbors"),
         "Radius outlier removal. Returns boolean inlier mask.");
 }
@@ -211,7 +219,7 @@ void bind_features(py::module_& m) {
                 static_cast<const double*>(buf.ptr), n, dist_thresh, max_iter);
             py::dict out;
             out["model"] = py::array_t<double>(4, result.model.data());
-            out["inliers"] = py::array_t<bool>(n, result.inliers.data());
+            out["inliers"] = bool_vec_to_array(result.inliers);
             out["score"] = result.score;
             return out;
         },
