@@ -38,9 +38,9 @@ logger = logging.getLogger(__name__)
 
 OUTPUTS = Path(__file__).parent.parent / "outputs"
 
-# Use a different tile than canopy_height_model.py (which uses KY CentralEast)
-# North Carolina Piedmont — mixed forest, suburban, varied terrain
-_DEMO_BBOX = "-79.1,35.9,-78.9,36.1"
+# Virginia Blue Ridge — mixed hardwood forest, varied terrain
+# Different region from canopy_height_model.py (which uses KY CentralEast)
+_DEMO_BBOX = "-79.6,37.7,-79.4,37.9"
 _TNM_URL = (
     "https://tnmaccess.nationalmap.gov/api/v1/products"
     f"?datasets=Lidar%20Point%20Cloud%20(LPC)&bbox={_DEMO_BBOX}"
@@ -52,7 +52,7 @@ def _find_tile() -> str:
     """Query USGS TNM for a North Carolina Piedmont tile."""
     import json
 
-    logger.info("Querying USGS National Map for NC Piedmont LiDAR tile…")
+    logger.info("Querying USGS National Map for VA Blue Ridge LiDAR tile…")
     req = urllib.request.Request(
         _TNM_URL, headers={"User-Agent": "Mozilla/5.0 occulus-examples/1.0"}
     )
@@ -67,7 +67,7 @@ def _find_tile() -> str:
         sys.exit(1)
     items = data.get("items", [])
     if not items:
-        logger.error("No tiles found for NC bbox %s", _DEMO_BBOX)
+        logger.error("No tiles found for VA bbox %s", _DEMO_BBOX)
         sys.exit(1)
     url = items[0]["downloadURL"]
     logger.info("Found tile: %s", url.split("/")[-1])
