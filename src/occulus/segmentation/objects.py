@@ -117,6 +117,7 @@ def segment_trees(
     resolution: float = 1.0,
     min_height: float = 2.0,
     min_crown_area: float = 4.0,
+    max_raster_size: int = 5000,
 ) -> SegmentationResult:
     """Segment individual trees using a CHM-based watershed approach.
 
@@ -139,6 +140,10 @@ def segment_trees(
     min_crown_area : float, optional
         Minimum crown area in square coordinate units to retain a tree
         segment, by default 4.0.
+    max_raster_size : int, optional
+        Maximum allowed dimension (width or height) for the CHM raster.
+        If the computed raster would exceed this in either dimension, the
+        resolution is automatically coarsened to fit. By default 5000.
 
     Returns
     -------
@@ -161,7 +166,7 @@ def segment_trees(
         raise OcculusSegmentationError("Cannot segment trees from an empty cloud")
 
     from scipy.ndimage import label as nd_label  # type: ignore[import-untyped]
-    from scipy.ndimage import maximum_filter
+    from scipy.ndimage import maximum_filter, watershed_ift
 
     xyz = cloud.xyz
     x_min, y_min = xyz[:, 0].min(), xyz[:, 1].min()
@@ -171,16 +176,31 @@ def segment_trees(
     nx = max(2, int(np.ceil((x_max - x_min) / resolution)) + 1)
     ny = max(2, int(np.ceil((y_max - y_min) / resolution)) + 1)
 
+    # Auto-coarsen resolution if raster would exceed max_raster_size
+    max_dim = max(nx, ny)
+    if max_dim > max_raster_size:
+        old_resolution = resolution
+        resolution = resolution * (max_dim / max_raster_size)
+        nx = max(2, int(np.ceil((x_max - x_min) / resolution)) + 1)
+        ny = max(2, int(np.ceil((y_max - y_min) / resolution)) + 1)
+        logger.warning(
+            "CHM raster %dx%d exceeds max_raster_size=%d, "
+            "coarsening resolution from %.4f to %.4f",
+            max(2, int(np.ceil((x_max - x_min) / old_resolution)) + 1),
+            max(2, int(np.ceil((y_max - y_min) / old_resolution)) + 1),
+            max_raster_size,
+            old_resolution,
+            resolution,
+        )
+
     col_idx = np.clip(((xyz[:, 0] - x_min) / resolution).astype(int), 0, nx - 1)
     row_idx = np.clip(((xyz[:, 1] - y_min) / resolution).astype(int), 0, ny - 1)
 
-    # Build max-Z raster (CHM)
+    # Build max-Z raster (CHM) — vectorised via np.maximum.at
+    heights = xyz[:, 2] - z_min
     chm = np.zeros((ny, nx), dtype=np.float64)
-    for i in range(cloud.n_points):
-        r, c = row_idx[i], col_idx[i]
-        h = xyz[i, 2] - z_min
-        if h > chm[r, c]:
-            chm[r, c] = h
+    flat_idx = row_idx * nx + col_idx
+    np.maximum.at(chm.ravel(), flat_idx, heights)
 
     # Detect local maxima (tree tops) via morphological maximum filter
     neighborhood = max(3, int(np.ceil(min_crown_area**0.5 / resolution)) | 1)
@@ -195,26 +215,34 @@ def segment_trees(
             f"No trees detected (min_height={min_height}). Try lowering min_height or resolution."
         )
 
-    # Marker-controlled watershed via priority flood
-    labels_grid = _marker_watershed(chm, treetop_labels, n_tops)
+    # Marker-controlled watershed via scipy watershed_ift.
+    # watershed_ift expects a uint8/uint16 cost surface and int32 markers.
+    # We invert the CHM so that high canopy = low cost (seeds expand from peaks).
+    chm_max = chm.max()
+    if chm_max > 0:
+        cost = ((1.0 - chm / chm_max) * 65534).astype(np.uint16)
+    else:
+        cost = np.zeros_like(chm, dtype=np.uint16)
+    labels_grid = watershed_ift(cost, treetop_labels.astype(np.int32))
 
-    # Map each point to its tree label
-    pt_labels = np.full(cloud.n_points, -1, dtype=np.int32)
-    for i in range(cloud.n_points):
-        h = xyz[i, 2] - z_min
-        if h >= min_height:
-            lbl = labels_grid[row_idx[i], col_idx[i]]
-            pt_labels[i] = int(lbl) - 1  # 0-indexed; 0 in grid → -1 (unlabelled)
+    # Map each point to its tree label — vectorised
+    height_mask = heights >= min_height
+    grid_labels = labels_grid[row_idx, col_idx] - 1  # 0 in grid → -1 (unlabelled)
+    pt_labels = np.where(height_mask, grid_labels, np.int32(-1)).astype(np.int32)
 
-    unique_labels = {int(x) for x in set(pt_labels) - {-1}}
+    # Prune tiny segments
+    unique_labels, counts = np.unique(pt_labels[pt_labels >= 0], return_counts=True)
+    min_count = min_crown_area / (resolution**2)
     segment_sizes: dict[int, int] = {}
-    for lbl in unique_labels:
-        count = int((pt_labels == lbl).sum())
-        # Prune tiny segments
-        if count * resolution**2 >= min_crown_area:
-            segment_sizes[int(lbl)] = count
+    small_labels = set()
+    for lbl, count in zip(unique_labels, counts):
+        if count >= min_count:
+            segment_sizes[int(lbl)] = int(count)
         else:
-            pt_labels[pt_labels == lbl] = -1
+            small_labels.add(int(lbl))
+    if small_labels:
+        small_mask = np.isin(pt_labels, list(small_labels))
+        pt_labels[small_mask] = -1
 
     n_segments = len(segment_sizes)
     logger.info(
@@ -282,53 +310,5 @@ def _dbscan(
                 labels[j] = cluster_id
 
         cluster_id += 1
-
-    return labels
-
-
-def _marker_watershed(
-    chm: NDArray[np.float64],
-    markers: NDArray[np.int32],
-    n_markers: int,
-) -> NDArray[np.int32]:
-    """Simple descending marker-controlled watershed on a CHM raster.
-
-    Parameters
-    ----------
-    chm : NDArray[np.float64]
-        Canopy height model (H, W).
-    markers : NDArray[np.int32]
-        Seed labels array (H, W); 0 = unlabelled.
-    n_markers : int
-        Number of distinct marker labels.
-
-    Returns
-    -------
-    NDArray[np.int32]
-        Label array (H, W); 0 = unlabelled.
-    """
-    import heapq
-
-    ny, nx = chm.shape
-    labels = markers.copy()
-
-    # Priority queue: (-height, row, col) — process highest cells first
-    heap: list[tuple[float, int, int]] = []
-    for r in range(ny):
-        for c in range(nx):
-            if labels[r, c] > 0:
-                heapq.heappush(heap, (-chm[r, c], r, c))
-
-    visited = labels > 0
-
-    while heap:
-        _neg_h, r, c = heapq.heappop(heap)
-        lbl = labels[r, c]
-        for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
-            nr, nc = r + dr, c + dc
-            if 0 <= nr < ny and 0 <= nc < nx and not visited[nr, nc]:
-                visited[nr, nc] = True
-                labels[nr, nc] = lbl
-                heapq.heappush(heap, (-chm[nr, nc], nr, nc))
 
     return labels

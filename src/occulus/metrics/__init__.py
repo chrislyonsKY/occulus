@@ -277,15 +277,13 @@ def canopy_height_model(
     nx = len(x_edges) - 1
     ny = len(y_edges) - 1
 
-    # Build ground surface: minimum Z per cell
-    ground_surface = np.full((ny, nx), np.nan)
+    # Build ground surface: minimum Z per cell — vectorised via np.minimum.at
+    ground_surface = np.full((ny, nx), np.inf)
     g_col = np.clip(((ground_xyz[:, 0] - x_min) / resolution).astype(int), 0, nx - 1)
     g_row = np.clip(((ground_xyz[:, 1] - y_min) / resolution).astype(int), 0, ny - 1)
-    for i in range(len(ground_xyz)):
-        r, c = g_row[i], g_col[i]
-        z = ground_xyz[i, 2]
-        if np.isnan(ground_surface[r, c]) or z < ground_surface[r, c]:
-            ground_surface[r, c] = z
+    g_flat = g_row * nx + g_col
+    np.minimum.at(ground_surface.ravel(), g_flat, ground_xyz[:, 2])
+    ground_surface[ground_surface == np.inf] = np.nan
 
     # Fill NaN ground cells with nearest finite value
     valid_mask = np.isfinite(ground_surface)
@@ -300,16 +298,14 @@ def canopy_height_model(
         _, fill_nn = fill_tree.query(nv_pts, k=1, workers=-1)
         ground_surface[nv_rows, nv_cols] = ground_surface[rows[fill_nn], cols[fill_nn]]
 
-    # Build vegetation max-Z raster
-    veg_max = np.full((ny, nx), np.nan)
+    # Build vegetation max-Z raster — vectorised via np.maximum.at
+    veg_max = np.full((ny, nx), -np.inf)
     if len(veg_xyz) > 0:
         v_col = np.clip(((veg_xyz[:, 0] - x_min) / resolution).astype(int), 0, nx - 1)
         v_row = np.clip(((veg_xyz[:, 1] - y_min) / resolution).astype(int), 0, ny - 1)
-        for i in range(len(veg_xyz)):
-            r, c = v_row[i], v_col[i]
-            z = veg_xyz[i, 2]
-            if np.isnan(veg_max[r, c]) or z > veg_max[r, c]:
-                veg_max[r, c] = z
+        v_flat = v_row * nx + v_col
+        np.maximum.at(veg_max.ravel(), v_flat, veg_xyz[:, 2])
+    veg_max[veg_max == -np.inf] = np.nan
 
     # CHM = max vegetation Z - ground Z
     chm = np.zeros((ny, nx), dtype=np.float64)
